@@ -70,7 +70,7 @@ for f in REPORTES:
         pho = phone(g(r, "telefono")); byphfam[(pho, prod)].append(s); dept_total[dp_all] += 1
         if s in NODESP:
             bk = "CANCELADO" if s == "CANCELADO" else ("RECHAZADO" if s == "RECHAZADO" else "PENDIENTE/CONF")
-            nod_records.append((pho, prod, bk, dp_all, g(r, "transportadora")))
+            nod_records.append((pho, prod, bk, dp_all, g(r, "transportadora"), mk))
         if s == "ENTREGADO":
             cells[k]["ingreso"] += num(g(r, "total")) - num(g(r, "cogs")) - fl
             cells[k]["cogs"] += num(g(r, "cogs")); cells[k]["flete"] += fl
@@ -87,6 +87,17 @@ for f in REPORTES:
             if s in DEV: transp[t]["fdev"] += fl + num(g(r, "costo_dev_flete"))
             depto[dp]["desp"] += 1; depto[dp]["ent"] += es_ent
             cc2 = ciudad_tr[ci][t]; cc2[0] += 1; cc2[1] += es_ent
+
+# recreaciones: un no-despachado con hermano despachado (otra guía / última milla) NO es pérdida
+def es_rescatado(pho, fm):
+    if any(st not in NODESP for st in byphfam[(pho, fm)]): return "Dropi (otra guía)"
+    if pho in um_ok: return "Última milla"
+    return None
+nod_eval = []; rescued_month = defaultdict(int)
+for pho, fm, bk, dp, tr, mk2 in nod_records:
+    via = es_rescatado(pho, fm)
+    nod_eval.append((pho, fm, bk, dp, tr, mk2, via))
+    if via: rescued_month[mk2] += 1
 
 def prod_metrics(mk, prod):
     c = cells[(mk, prod)]; cc = cnt[(mk, prod)]
@@ -132,14 +143,18 @@ for mk in sorted(set(k[0] for k in cells)):
     sh = SHOPIFY_ORD.get(mk, 0)
     no_desp = sum(prods[p]["canceladas"] + prods[p]["rechazadas"] + prods[p]["pend_conf"] for p in prods)
     resuelt = tot["despachadas"] + tot["canceladas"] + tot["rechazadas"] + tot["pend_conf"]
-    confirmacion = {"resueltas": int(resuelt), "despachadas": int(tot["despachadas"]),
+    resc_m = rescued_month.get(mk, 0)
+    resuelt_net = resuelt - resc_m
+    confirmacion = {"resueltas": int(resuelt), "rescatados": int(resc_m), "resueltas_netas": int(resuelt_net),
+        "despachadas": int(tot["despachadas"]),
         "canceladas": int(tot["canceladas"]), "rechazadas": int(tot["rechazadas"]),
         "pend_conf": int(tot["pend_conf"]), "generadas_shopify": sh,
-        "tasa": round(tot["despachadas"] / resuelt * 100, 1) if resuelt else 0,
+        "tasa": round(tot["despachadas"] / resuelt_net * 100, 1) if resuelt_net else 0,
+        "tasa_bruta": round(tot["despachadas"] / resuelt * 100, 1) if resuelt else 0,
         "tasa_vs_generadas": round(tot["despachadas"] / sh * 100, 1) if sh else None}
     meses[mk] = {"shopify_orders": sh, "provisional": mk in PROVISIONAL, "confirmacion": confirmacion,
         "sincronizacion": round(tot["ordenes"] / sh * 100, 1) if sh else None,
-        "tasa_despacho": round(tot["despachadas"] / resuelt * 100, 1) if resuelt else 0,
+        "tasa_despacho": round(tot["despachadas"] / resuelt_net * 100, 1) if resuelt_net else 0,
         "tasa_entrega": round(tot["entregadas"] / tot["despachadas"] * 100, 1) if tot["despachadas"] else 0,
         "productos": prods,
         "pyg": {"ingreso": round(tot["ingreso"]), "cogs": round(tot["cogs"]), "flete": round(tot["flete"]),
@@ -163,15 +178,10 @@ for ci, trs in ciudad_tr.items():
     matriz[ci] = {t: {"desp": v[0], "entrega": round(v[1] / v[0] * 100, 1) if v[0] >= 4 else None}
                   for t, v in trs.items() if v[0] >= 4}
 
-def es_rescatado(pho, fm):
-    if any(st not in NODESP for st in byphfam[(pho, fm)]): return "Dropi (otra guía)"
-    if pho in um_ok: return "Última milla"
-    return None
 nod_tipo = defaultdict(int); nod_resc = defaultdict(int); resc_via = defaultdict(int)
 nod_carrier = defaultdict(int); dep_real = defaultdict(int)
-for pho, fm, bk, dp, tr in nod_records:
+for pho, fm, bk, dp, tr, mk2, via in nod_eval:
     nod_tipo[bk] += 1; nod_carrier["con" if tr not in (None, "") else "sin"] += 1
-    via = es_rescatado(pho, fm)
     if via: nod_resc[bk] += 1; resc_via[via] += 1
     else: dep_real[dp] += 1
 nod_total = sum(nod_tipo.values()); resc_total = sum(nod_resc.values())

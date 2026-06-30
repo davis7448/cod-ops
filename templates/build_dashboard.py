@@ -59,7 +59,7 @@ th{color:var(--muted);font-weight:500}
   </div>
   <h2>Logística (resumen del periodo)</h2>
   <div class="kpis" id="log"></div>
-  <h2>Confirmación de pedidos · tendencia <span style="font-size:11px;color:var(--muted)">(despachadas / resueltas, dato Dropi)</span></h2>
+  <h2>Confirmación de pedidos · tendencia <span style="font-size:11px;color:var(--muted)">(tasa neta — re-ruteos descontados)</span></h2>
   <div class="grid2">
     <div class="box"><div style="position:relative;height:230px"><canvas id="chConf"></canvas></div></div>
     <div class="box"><table id="tconf"></table></div>
@@ -175,13 +175,13 @@ function drawConf(){
       pointBackgroundColor:bg,pointRadius:5,pointBorderColor:bg}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const m=ms[c.dataIndex],cf=DATA.meses[m].confirmacion;
-        return [c.raw+'%'+(DATA.meses[m].provisional?' (provisional)':''),'desp '+cf.despachadas+' / resueltas '+cf.resueltas]}}}},
+        return [c.raw+'%'+(DATA.meses[m].provisional?' (provisional)':''),'desp '+cf.despachadas+' / resueltas netas '+cf.resueltas_netas]}}}},
       scales:{x:{ticks:{color:'#8b8f99'},grid:{display:false}},
         y:{suggestedMin:50,suggestedMax:100,ticks:{color:'#8b8f99',callback:v=>v+'%'},grid:{color:'#2a2e37'}}}}});
-  let h='<tr><th>Mes</th><th>Confirm.</th><th>Despach.</th><th>Cancel.</th><th>Rechaz.</th><th>Pend.</th></tr>';
+  let h='<tr><th>Mes</th><th>Confirm.</th><th>Despach.</th><th>Re-rut.</th><th>Cancel.</th><th>Rechaz.</th><th>Pend.</th></tr>';
   h+=ms.map(m=>{const c=DATA.meses[m].confirmacion;const pv=DATA.meses[m].provisional?' <span class="warn" style="font-size:10px">prov</span>':'';
     const cls=c.tasa>=80?'pos':c.tasa>=70?'warn':'neg';
-    return '<tr><td>'+(NOM[m]||m)+pv+'</td><td class="'+cls+'">'+c.tasa+'%</td><td>'+c.despachadas+'</td><td>'+c.canceladas+'</td><td>'+c.rechazadas+'</td><td>'+c.pend_conf+'</td></tr>'}).join('');
+    return '<tr><td>'+(NOM[m]||m)+pv+'</td><td class="'+cls+'">'+c.tasa+'%</td><td>'+c.despachadas+'</td><td class="pos">'+(c.rescatados||0)+'</td><td>'+c.canceladas+'</td><td>'+c.rechazadas+'</td><td>'+c.pend_conf+'</td></tr>'}).join('');
   document.getElementById('tconf').innerHTML=h;
 }
 function chips(id,items,sel,cb){const c=document.getElementById(id);
