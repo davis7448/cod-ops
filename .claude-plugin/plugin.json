@@ -1,0 +1,7 @@
+{
+  "name": "cod-ops",
+  "version": "1.0.0",
+  "description": "Sistema operativo para e-commerce contra-entrega (COD) en Colombia: rentabilidad, escalado Meta One CBO, ruteo de transportadoras, parser logístico Dropi/última milla y dashboard. Método reutilizable; los datos de cada tienda viven en tienda.config.json.",
+  "author": { "name": "David" },
+  "keywords": ["cod", "ecommerce", "dropshipping", "meta-ads", "dropi", "colombia"]
+}

@@ -1,0 +1,99 @@
+{
+  "_doc": "Config por tienda. TODO lo específico de un negocio vive aquí; el método (skills + build_*.py) es genérico. Llénalo con /cod-ops:setup-tienda o a mano. Edita PAUTA/APPS/SHOPIFY_ORD cada cierre.",
+
+  "tienda": {
+    "nombre": "MI TIENDA",
+    "pais": "Colombia",
+    "moneda": "COP",
+    "shopify_domain": "xxxxxx.myshopify.com",
+    "meta_business": "Nombre del Business Manager",
+    "meta_account_id": "0000000000000000"
+  },
+
+  "productos": {
+    "_doc": "Familias de producto. La clave es el nombre canónico; 'keywords' son substrings (mayúsculas) que identifican el producto en la columna PRODUCTO del reporte Dropi.",
+    "CEELIKE": ["CEELIKE", "GEELIKE", "NANO", "HYDROX"],
+    "JOINT": ["JOINT", "FUNRICH"]
+  },
+
+  "costos": {
+    "_doc": "Costos operativos del modelo de utilidad. Ajusta a tu operación.",
+    "confirmacion_por_despachada": 3600,
+    "comision_ventas_pct": 0.02,
+    "impuesto_pct": 0.004,
+    "flete_ultima_milla": 12000
+  },
+
+  "targets": {
+    "_doc": "Targets de escalado POR PRODUCTO (se recalculan cada cierre con /cod-ops:rentabilidad). break_even y target_cpa en COD dependen de la tasa de entrega.",
+    "gate_entrega_pct": 73,
+    "por_producto": {
+      "CEELIKE": { "target_cpa": 14000, "break_even": 19000, "min_diario": 90000 },
+      "JOINT":   { "target_cpa": 17000, "break_even": 22900, "min_diario": 110000 }
+    }
+  },
+
+  "dropi_columnas": {
+    "_doc": "Mapeo de columnas del reporte ordenes_productos_*.xlsx. Cambia solo si tu export usa otros encabezados.",
+    "id": "ID",
+    "fecha": "FECHA",
+    "fecha_formato": "%d-%m-%Y",
+    "producto": "PRODUCTO",
+    "estatus": "ESTATUS",
+    "total": "TOTAL DE LA ORDEN",
+    "flete": "PRECIO FLETE",
+    "costo_dev_flete": "COSTO DEVOLUCION FLETE",
+    "cogs": "PRECIO PROVEEDOR X CANTIDAD",
+    "departamento": "DEPARTAMENTO DESTINO",
+    "ciudad": "CIUDAD DESTINO",
+    "transportadora": "TRANSPORTADORA"
+  },
+
+  "estatus": {
+    "devolucion": ["DEVOLUCION", "DEVOLUCION EN BODEGA"],
+    "no_despachado": ["CANCELADO", "RECHAZADO", "PENDIENTE CONFIRMACION", "PENDIENTE"]
+  },
+
+  "reportes": {
+    "_doc": "Rutas absolutas a los xlsx de Dropi (uno o varios periodos). Se deduplican por ID.",
+    "dropi": [
+      "/Users/USUARIO/Downloads/ordenes_productos_XXXX.xlsx"
+    ]
+  },
+
+  "mensual": {
+    "_doc": "Datos externos por mes (YYYY-MM). PAUTA por producto se jala de Meta MCP; APPS y SHOPIFY_ORD los confirma el operador. Actualizar cada cierre.",
+    "pauta": {
+      "2026-06": { "CEELIKE": 0, "JOINT": 0, "OTRO": 0 }
+    },
+    "apps": {
+      "2026-06": 0
+    },
+    "shopify_orders": {
+      "2026-06": 0
+    },
+    "provisional": ["2026-06"],
+    "informativo": {
+      "_doc": "Meses históricos sin reporte detallado: solo utilidad neta del Sheet (YYYY-MM: valor)."
+    },
+    "mes_inicio_detalle": "2026-03"
+  },
+
+  "ruteo": {
+    "objetivo": "Reasignar transportadora por zona caliente según evidencia interna de entrega",
+    "baseline": { "zona": "—", "transportadora": "—", "entrega": 0, "devolucion": 0 },
+    "candidata": "—",
+    "gate_escalado": 73,
+    "estado": "SIN INICIAR",
+    "fecha_implementacion": null,
+    "semanas": [],
+    "plan_zonas": []
+  },
+
+  "dashboard": {
+    "meses_nombre": {
+      "2026-03": "Marzo", "2026-04": "Abril", "2026-05": "Mayo",
+      "2026-06": "Junio", "2026-07": "Julio", "2026-08": "Agosto"
+    }
+  }
+}

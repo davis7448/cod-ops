@@ -1,0 +1,15 @@
+{
+  "name": "cod-ops",
+  "owner": { "name": "David" },
+  "metadata": {
+    "description": "Marketplace de cod-ops — el SO de e-commerce COD.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "cod-ops",
+      "source": "./",
+      "description": "Skills + motor de dashboard para operar una tienda COD (Meta One CBO + Dropi + contabilidad)."
+    }
+  ]
+}
