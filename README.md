@@ -15,6 +15,7 @@ Sistema operativo para e-commerce **contra-entrega (COD)** en Colombia, empaquet
 | `/cod-ops:rentabilidad` | Break-even, target CPA, ROAS real, cierre contable |
 | `/cod-ops:ruteo` | Optimización de transportadoras por zona |
 | `/cod-ops:reportes-logistica` | Parser Dropi + última milla, dedup de recreaciones |
+| `/cod-ops:confirmacion` | Snapshot diario del funnel de confirmación (Chatea Pro / UChat) |
 
 **Motor del dashboard** (`templates/`): `build_data.py` (reportes → `data.json`) + `build_dashboard.py` (`data.json` → `dashboard.html` interactivo, 2 páginas) + `tienda.config.json` (la plantilla de config).
 

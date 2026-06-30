@@ -90,6 +90,17 @@
     "plan_zonas": []
   },
 
+  "chatea_pro": {
+    "_doc": "Confirmación por WhatsApp (Chatea Pro / UChat). La API key NO va aquí — va en .env como CHATEAPRO_API_KEY. base_url = dominio de tu white-label.",
+    "base_url": "https://chateapro.app/api",
+    "tags": {
+      "funnel": "Embudo: Confirmaciones",
+      "confirmado": ["PEDIDO CONFIRMADO", "Ya confirmado✅"],
+      "falta_direccion": "[Confirmaciones] Faltan datos en la dirección"
+    },
+    "campo_valor": "Valor de la compra"
+  },
+
   "dashboard": {
     "meses_nombre": {
       "2026-03": "Marzo", "2026-04": "Abril", "2026-05": "Mayo",
