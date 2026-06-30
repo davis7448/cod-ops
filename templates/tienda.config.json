@@ -40,6 +40,7 @@
     "fecha_formato": "%d-%m-%Y",
     "producto": "PRODUCTO",
     "estatus": "ESTATUS",
+    "telefono": "TELÉFONO",
     "total": "TOTAL DE LA ORDEN",
     "flete": "PRECIO FLETE",
     "costo_dev_flete": "COSTO DEVOLUCION FLETE",
@@ -88,6 +89,13 @@
     "fecha_implementacion": null,
     "semanas": [],
     "plan_zonas": []
+  },
+
+  "ultima_milla": {
+    "_doc": "Reporte de última milla propia (opcional). Sirve para detectar recreaciones cross-plataforma: un cancelado en Dropi que se recreó aquí NO es pérdida. Deja report vacío si no aplica.",
+    "report": "",
+    "col_telefono": "telefono",
+    "col_estado": "estado"
   },
 
   "chatea_pro": {

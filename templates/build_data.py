@@ -40,7 +40,18 @@ seen = set()
 cells = defaultdict(lambda: defaultdict(float)); cnt = defaultdict(lambda: defaultdict(int))
 transp = defaultdict(lambda: defaultdict(float)); depto = defaultdict(lambda: defaultdict(float))
 ciudad_tr = defaultdict(lambda: defaultdict(lambda: [0, 0]))
-nod_tipo = defaultdict(int); nod_carrier = defaultdict(int); nod_depto = defaultdict(lambda: [0, 0])
+# NO DESPACHO (motivos/cobertura/recreaciones)
+nod_records = []; byphfam = defaultdict(list); dept_total = defaultdict(int)
+def phone(x):
+    d = "".join(c for c in str(x or "") if c.isdigit()); return d[-10:] if len(d) >= 10 else d
+UM = CFG.get("ultima_milla", {}); um_ok = set()
+if UM.get("report") and os.path.exists(UM["report"]):
+    uwb = openpyxl.load_workbook(UM["report"], data_only=True)
+    uws = uwb[uwb.sheetnames[0]]
+    urows = list(uws.iter_rows(values_only=True)); uidx = {h: i for i, h in enumerate(urows[0])}
+    for ur in urows[1:]:
+        e = str(ur[uidx[UM.get("col_estado", "estado")]] or "")
+        if e and "cancel" not in e.lower(): um_ok.add(phone(ur[uidx[UM.get("col_telefono", "telefono")]]))
 
 for f in REPORTES:
     if not os.path.exists(f): continue
@@ -56,13 +67,10 @@ for f in REPORTES:
         prod = fam(g(r, "producto")); s = str(g(r, "estatus")); fl = num(g(r, "flete")); k = (mk, prod)
         cnt[k][s] += 1; cnt[k]["_t"] += 1
         dp_all = str(g(r, "departamento") or "N/D").strip().upper()
-        nod_depto[dp_all][1] += 1
+        pho = phone(g(r, "telefono")); byphfam[(pho, prod)].append(s); dept_total[dp_all] += 1
         if s in NODESP:
-            nod_depto[dp_all][0] += 1
             bk = "CANCELADO" if s == "CANCELADO" else ("RECHAZADO" if s == "RECHAZADO" else "PENDIENTE/CONF")
-            nod_tipo[bk] += 1
-            tr_nd = g(r, "transportadora")
-            nod_carrier["con" if tr_nd not in (None, "") else "sin"] += 1
+            nod_records.append((pho, prod, bk, dp_all, g(r, "transportadora")))
         if s == "ENTREGADO":
             cells[k]["ingreso"] += num(g(r, "total")) - num(g(r, "cogs")) - fl
             cells[k]["cogs"] += num(g(r, "cogs")); cells[k]["flete"] += fl
@@ -155,13 +163,25 @@ for ci, trs in ciudad_tr.items():
     matriz[ci] = {t: {"desp": v[0], "entrega": round(v[1] / v[0] * 100, 1) if v[0] >= 4 else None}
                   for t, v in trs.items() if v[0] >= 4}
 
-nod_total = sum(nod_tipo.values())
-no_despacho = {"total": nod_total, "tipo": dict(nod_tipo),
+def es_rescatado(pho, fm):
+    if any(st not in NODESP for st in byphfam[(pho, fm)]): return "Dropi (otra guía)"
+    if pho in um_ok: return "Última milla"
+    return None
+nod_tipo = defaultdict(int); nod_resc = defaultdict(int); resc_via = defaultdict(int)
+nod_carrier = defaultdict(int); dep_real = defaultdict(int)
+for pho, fm, bk, dp, tr in nod_records:
+    nod_tipo[bk] += 1; nod_carrier["con" if tr not in (None, "") else "sin"] += 1
+    via = es_rescatado(pho, fm)
+    if via: nod_resc[bk] += 1; resc_via[via] += 1
+    else: dep_real[dp] += 1
+nod_total = sum(nod_tipo.values()); resc_total = sum(nod_resc.values())
+no_despacho = {"total": nod_total, "rescatados": resc_total, "perdidos": nod_total - resc_total,
+   "rescate_via": dict(resc_via),
+   "tipo": {bk: {"total": nod_tipo[bk], "rescatado": nod_resc[bk], "perdido": nod_tipo[bk] - nod_resc[bk]} for bk in nod_tipo},
    "con_transportadora_pct": round(nod_carrier.get("con", 0) / nod_total * 100, 1) if nod_total else 0,
-   "sin_transportadora": nod_carrier.get("sin", 0),
-   "top_departamentos": [{"depto": d, "nod": v[0], "total": v[1], "tasa": round(v[0] / v[1] * 100, 1)}
-       for d, v in sorted(nod_depto.items(), key=lambda x: -(x[1][0] / x[1][1] if x[1][1] else 0))
-       if v[1] >= 15][:10]}
+   "top_departamentos": [{"depto": d, "perdido": dep_real[d], "total": dept_total[d], "tasa": round(dep_real[d] / dept_total[d] * 100, 1)}
+       for d in sorted(dep_real, key=lambda d: -(dep_real[d] / dept_total[d] if dept_total[d] else 0))
+       if dept_total[d] >= 15][:10]}
 logistica = {"transportadoras": transportadoras, "departamentos": departamentos,
              "matriz_ciudad_transp": matriz, "ruteo": CFG["ruteo"], "no_despacho": no_despacho}
 

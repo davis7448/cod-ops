@@ -213,14 +213,15 @@ function renderLog(){
     : '<tr><td style="color:var(--muted)">Sin plan de zonas configurado.</td></tr>';
   const ND=L.no_despacho;
   if(ND){
-    const tl={'CANCELADO':'Canceló (echó para atrás)','RECHAZADO':'Rechazó (puerta / no estaba)','PENDIENTE/CONF':'Nunca confirmó (fantasma)'};
+    const tl={'CANCELADO':'Canceló','RECHAZADO':'Rechazó (puerta / no estaba)','PENDIENTE/CONF':'Nunca confirmó (fantasma)'};
     const cinv=v=>'<span class="'+(v>=35?'neg':v>=25?'warn':'')+'">'+v+'%</span>';
-    let h='<div style="font-size:13px;margin-bottom:12px;line-height:1.5">De <b>'+ND.total+'</b> pedidos no despachados, el <b class="pos">'+ND.con_transportadora_pct+'%</b> tenía transportadora asignada → <b>no es cobertura</b>, la transportadora sí llegaba. La caída es de <b>confirmación</b> (el cliente no completó).</div>';
-    h+='<table><tr><th>Tipo de caída</th><th>Pedidos</th><th>%</th></tr>';
-    Object.entries(ND.tipo).sort((a,b)=>b[1]-a[1]).forEach(([t,n])=>h+='<tr><td>'+(tl[t]||t)+'</td><td>'+n+'</td><td>'+Math.round(n/ND.total*100)+'%</td></tr>');
-    h+='</table><div style="font-size:13px;margin:14px 0 6px;color:var(--muted)">Departamentos con mayor tasa de no-despacho (foco geográfico):</div>';
-    h+='<table><tr><th>Departamento</th><th>No desp.</th><th>Total</th><th>Tasa</th></tr>';
-    ND.top_departamentos.forEach(d=>h+='<tr><td>'+d.depto+'</td><td>'+d.nod+'</td><td>'+d.total+'</td><td>'+cinv(d.tasa)+'</td></tr>');
+    const via=Object.entries(ND.rescate_via||{}).map(([k,v])=>v+' '+k).join(', ');
+    let h='<div style="font-size:13px;margin-bottom:12px;line-height:1.5">De <b>'+ND.total+'</b> no despachados, <b class="pos">'+ND.rescatados+'</b> fueron <b>re-ruteados</b> (recreados, no perdidos'+(via?': '+via:'')+'). <b class="neg">Pérdida real: '+ND.perdidos+'</b>.<br>El <b>'+ND.con_transportadora_pct+'%</b> tenía transportadora → <b>no es cobertura</b>, es confirmación.</div>';
+    h+='<table><tr><th>Tipo de caída</th><th>Total</th><th>Re-ruteado</th><th>Pérdida real</th></tr>';
+    Object.entries(ND.tipo).sort((a,b)=>b[1].total-a[1].total).forEach(([t,x])=>h+='<tr><td>'+(tl[t]||t)+'</td><td>'+x.total+'</td><td class="pos">'+x.rescatado+'</td><td class="neg">'+x.perdido+'</td></tr>');
+    h+='</table><div style="font-size:13px;margin:14px 0 6px;color:var(--muted)">Departamentos con mayor tasa de PÉRDIDA REAL (foco geográfico):</div>';
+    h+='<table><tr><th>Departamento</th><th>Perdidos</th><th>Total</th><th>Tasa</th></tr>';
+    ND.top_departamentos.forEach(d=>h+='<tr><td>'+d.depto+'</td><td>'+d.perdido+'</td><td>'+d.total+'</td><td>'+cinv(d.tasa)+'</td></tr>');
     document.getElementById('noDespacho').innerHTML=h+'</table>';
   }
   const T=L.transportadoras;
