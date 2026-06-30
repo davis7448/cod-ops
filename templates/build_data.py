@@ -122,7 +122,7 @@ for mk in sorted(set(k[0] for k in cells)):
         "tasa_vs_generadas": round(tot["despachadas"] / sh * 100, 1) if sh else None}
     meses[mk] = {"shopify_orders": sh, "provisional": mk in PROVISIONAL, "confirmacion": confirmacion,
         "sincronizacion": round(tot["ordenes"] / sh * 100, 1) if sh else None,
-        "tasa_despacho": round(tot["despachadas"] / (tot["entregadas"] + tot["devueltas"] + no_desp) * 100, 1) if tot["despachadas"] else 0,
+        "tasa_despacho": round(tot["despachadas"] / resuelt * 100, 1) if resuelt else 0,
         "tasa_entrega": round(tot["entregadas"] / tot["despachadas"] * 100, 1) if tot["despachadas"] else 0,
         "productos": prods,
         "pyg": {"ingreso": round(tot["ingreso"]), "cogs": round(tot["cogs"]), "flete": round(tot["flete"]),
