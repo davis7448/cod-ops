@@ -123,7 +123,7 @@ ANTES DE CERRAR:
 | **Targets/CPA por producto** (`targets` en config) | Mensual (cierre) | Recalcular con `/cod-ops:rentabilidad` (dependen de la entrega del mes). |
 | **Pauta / apps / shopify_orders** (`mensual` en config) | Mensual (cierre) | Pauta de Meta MCP, apps que confirma el operador, órdenes de Shopify MCP. |
 | **Dashboard** (`data.json` → `dashboard.html`): P&G, confirmación neta, no-despacho, rentabilidad x producto | Mensual o bajo demanda | Editar reportes/config → `python3 build_data.py` → `python3 build_dashboard.py`. |
-| **Reporte de reclamos de rechazados** (`reclamos_rechazados.xlsx`) | Mensual o ante pico | Filtrar `RECHAZADO` de los reportes Dropi → Excel por transportadora. Disputar con el proveedor. |
+| **Reporte de reclamos de rechazados** (`RECLAMO_rechazados_AAAA-MM.xlsx`) | Mensual o ante pico | `python3 gen_reclamo_rechazados.py` → Excel formateado (encabezado + resumen + detalle por pedido con motivo probable), listo para enviar al proveedor. RECHAZADO lo pone el proveedor (sin stock / guía con error) → reclamable. |
 | **Estado del piloto de ruteo** (`ruteo` en config) | Quincenal | Tras cohorte madura (<5% tránsito): comparar entrega por zona vs baseline; registrar en `ruteo.semanas`. |
 | **API key de Chatea Pro** (`.env`) | Al rotarla | Reemplazar `CHATEAPRO_API_KEY` en `.env` (nunca en el chat ni en el config). |
 
