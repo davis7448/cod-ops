@@ -16,7 +16,8 @@ Eres el copiloto de seguimiento de una operación de e-commerce **COD** en Colom
 1. **CPA por producto** vs su Target CPA y Break-even (`targets.por_producto` del config).
 2. **Aplica el árbol de decisión** (abajo), por producto.
 3. **Subir creativos** (a diario): adset nuevo 3:1:1.
-4. **No** tocar presupuesto ni apagar antes de **72h**. **No** forzar gasto.
+4. **Snapshot de confirmación** (`/cod-ops:confirmacion`): correr `snapshot_confirmacion.py` → actuar sobre los frescos (<72h), los `📍FALTA DIR` primero. Acumula la serie en `confirmacion_log.jsonl`. (La routine programada lo hace solo cada mañana.)
+5. **No** tocar presupuesto ni apagar antes de **72h**. **No** forzar gasto.
 
 Regla de oro: para escalar solo importa el **CPA**. Las métricas blandas son para creativos.
 
@@ -105,11 +106,31 @@ ANTES DE CERRAR:
 - Evaluar nuevas excepciones por ciudad en zonas calientes (devoluciones × volumen).
 
 ## 🟠 MENSUAL — cierre + recálculo + gate
-1. **Cierre contable** (`/cod-ops:rentabilidad` + `/cod-ops:reportes-logistica`): exportar Dropi maduro (<5% tránsito), jalar pauta (Meta MCP) y ventas (Shopify MCP), generar cierre y regenerar dashboard.
+1. **Cierre contable** (`/cod-ops:rentabilidad` + `/cod-ops:reportes-logistica`): exportar Dropi maduro (<5% tránsito) + última milla, actualizar `mensual.pauta/apps/shopify_orders` en el config (pauta de Meta MCP, ventas de Shopify MCP), y **regenerar el dashboard** (`build_data.py` → `build_dashboard.py`). El dashboard ya recalcula solo: tasa de confirmación neta, motivos de no-despacho y re-ruteos.
 2. **Validar** ingreso cruzando contra el Sheet de contabilidad.
-3. **Recalcular** break-even y Target CPA **por producto** (dependen de la entrega del mes) → actualizar `targets` en el config.
+3. **Recalcular** break-even y Target CPA **por producto** → actualizar `targets` en el config.
 4. **Gate de entrega:** ¿entrega del mes maduro ≥ `gate_entrega_pct`? → habilitar escalado; si no, foco logística.
 5. **Rentabilidad por producto:** ¿alguno al filo del break-even? → bajar CPA o recortar.
+6. **Reclamos de rechazados:** generar el reporte de `RECHAZADO` (lo pone el proveedor, no tú) → Excel por transportadora para disputar. Vigilar guías faltantes y picos por transportadora.
+
+---
+
+## 🔧 Runbook — qué se actualiza, cuándo y cómo
+
+| Artefacto | Cadencia | Cómo se actualiza |
+|-----------|----------|-------------------|
+| **Lista accionable de confirmación** (`accionables_hoy.json`) + serie (`confirmacion_log.jsonl`) | Diaria | `snapshot_confirmacion.py` (la routine programada lo corre cada mañana). Actuar sobre frescos <72h. |
+| **Targets/CPA por producto** (`targets` en config) | Mensual (cierre) | Recalcular con `/cod-ops:rentabilidad` (dependen de la entrega del mes). |
+| **Pauta / apps / shopify_orders** (`mensual` en config) | Mensual (cierre) | Pauta de Meta MCP, apps que confirma el operador, órdenes de Shopify MCP. |
+| **Dashboard** (`data.json` → `dashboard.html`): P&G, confirmación neta, no-despacho, rentabilidad x producto | Mensual o bajo demanda | Editar reportes/config → `python3 build_data.py` → `python3 build_dashboard.py`. |
+| **Reporte de reclamos de rechazados** (`reclamos_rechazados.xlsx`) | Mensual o ante pico | Filtrar `RECHAZADO` de los reportes Dropi → Excel por transportadora. Disputar con el proveedor. |
+| **Estado del piloto de ruteo** (`ruteo` en config) | Quincenal | Tras cohorte madura (<5% tránsito): comparar entrega por zona vs baseline; registrar en `ruteo.semanas`. |
+| **API key de Chatea Pro** (`.env`) | Al rotarla | Reemplazar `CHATEAPRO_API_KEY` en `.env` (nunca en el chat ni en el config). |
+
+> **Definiciones clave que el runbook asume** (ver `/cod-ops:reportes-logistica` y `/cod-ops:rentabilidad`):
+> - **Confirmación = despacho** (misma puerta): `despachadas / resueltas_netas`. La tasa **neta** descuenta los **re-ruteos** (un cancelado recreado con otra transportadora o pasado a última milla NO es pérdida).
+> - **No-despacho ≠ cobertura:** si el pedido tenía transportadora asignada, la caída es de confirmación, no de cobertura.
+> - **Tasa de confirmación histórica:** del dato duro Dropi (Shopify→despacho), NUNCA de los tags efímeros de Chatea.
 
 ---
 
