@@ -41,3 +41,7 @@ Cada cierre: actualizas `mensual.pauta/apps/shopify_orders` y `targets` en el co
 
 ## Cómo está parametrizado
 `tienda.config.json` controla: nombre/IDs de la tienda, familias de producto (keywords), costos del modelo, targets por producto, mapeo de columnas del reporte Dropi, estatus, rutas de reportes, datos mensuales (pauta/apps/shopify), informativo histórico y el estado del piloto de ruteo. Cambiar de tienda = cambiar de config.
+
+## Licencia
+
+[MIT](LICENSE) © David Camilo Useche Marín
