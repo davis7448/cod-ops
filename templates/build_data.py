@@ -41,7 +41,7 @@ cells = defaultdict(lambda: defaultdict(float)); cnt = defaultdict(lambda: defau
 transp = defaultdict(lambda: defaultdict(float)); depto = defaultdict(lambda: defaultdict(float))
 ciudad_tr = defaultdict(lambda: defaultdict(lambda: [0, 0]))
 # NO DESPACHO (motivos/cobertura/recreaciones)
-nod_records = []; byphfam = defaultdict(list); dept_total = defaultdict(int)
+nod_records = []; byphfam = defaultdict(list); dept_total = defaultdict(int); rechazados_rows = []
 def phone(x):
     d = "".join(c for c in str(x or "") if c.isdigit()); return d[-10:] if len(d) >= 10 else d
 UM = CFG.get("ultima_milla", {}); um_ok = set()
@@ -71,6 +71,9 @@ for f in REPORTES:
         if s in NODESP:
             bk = "CANCELADO" if s == "CANCELADO" else ("RECHAZADO" if s == "RECHAZADO" else "PENDIENTE/CONF")
             nod_records.append((pho, prod, bk, dp_all, g(r, "transportadora"), mk))
+            if s == "RECHAZADO":
+                rechazados_rows.append((str(g(r, "transportadora") or "N/D").strip().upper(),
+                    num(g(r, "total")), mk, g(r, "guia") not in (None, "")))
         if s == "ENTREGADO":
             cells[k]["ingreso"] += num(g(r, "total")) - num(g(r, "cogs")) - fl
             cells[k]["cogs"] += num(g(r, "cogs")); cells[k]["flete"] += fl
@@ -192,8 +195,18 @@ no_despacho = {"total": nod_total, "rescatados": resc_total, "perdidos": nod_tot
    "top_departamentos": [{"depto": d, "perdido": dep_real[d], "total": dept_total[d], "tasa": round(dep_real[d] / dept_total[d] * 100, 1)}
        for d in sorted(dep_real, key=lambda d: -(dep_real[d] / dept_total[d] if dept_total[d] else 0))
        if dept_total[d] >= 15][:10]}
+# rechazados: estado que pone el PROVEEDOR → reclamable (no es rechazo del cliente)
+rch_transp = defaultdict(lambda: [0, 0.0]); rch_mes = defaultdict(int)
+for t, v, mk2, guia in rechazados_rows:
+    rch_transp[t][0] += 1; rch_transp[t][1] += v; rch_mes[mk2] += 1
+rechazados = {"total": len(rechazados_rows), "valor": round(sum(x[1] for x in rechazados_rows)),
+   "sin_guia": sum(1 for x in rechazados_rows if not x[3]),
+   "por_transportadora": [{"transp": t, "n": d[0], "valor": round(d[1])}
+       for t, d in sorted(rch_transp.items(), key=lambda x: -x[1][0])],
+   "por_mes": dict(sorted(rch_mes.items())), "archivo": "reclamos_rechazados.xlsx"}
 logistica = {"transportadoras": transportadoras, "departamentos": departamentos,
-             "matriz_ciudad_transp": matriz, "ruteo": CFG["ruteo"], "no_despacho": no_despacho}
+             "matriz_ciudad_transp": matriz, "ruteo": CFG["ruteo"], "no_despacho": no_despacho,
+             "rechazados": rechazados}
 
 data = {"tienda": CFG["tienda"]["nombre"], "meses_nombre": CFG.get("dashboard", {}).get("meses_nombre", {}),
         "productos": list(PRODUCTOS.keys()), "meses": meses,

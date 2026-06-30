@@ -75,6 +75,8 @@ th{color:var(--muted);font-weight:500}
   <div class="box"><table id="tplan"></table></div>
   <h2>Motivos de no-despacho <span style="font-size:11px;color:var(--muted)">(¿por qué no se confirma? ¿cobertura?)</span></h2>
   <div class="box" id="noDespacho"></div>
+  <h2>Rechazados · reclamables al proveedor <span style="font-size:11px;color:var(--muted)">(estado del proveedor, no del cliente)</span></h2>
+  <div class="box" id="rechazados"></div>
   <h2>Transportadoras (acumulado)</h2>
   <div class="box"><table id="ttransp"></table></div>
   <h2>Peores zonas — departamentos</h2>
@@ -213,16 +215,23 @@ function renderLog(){
     : '<tr><td style="color:var(--muted)">Sin plan de zonas configurado.</td></tr>';
   const ND=L.no_despacho;
   if(ND){
-    const tl={'CANCELADO':'Canceló','RECHAZADO':'Rechazó (puerta / no estaba)','PENDIENTE/CONF':'Nunca confirmó (fantasma)'};
+    const tl={'CANCELADO':'Canceló (cliente)','RECHAZADO':'Rechazado por el proveedor (reclamable)','PENDIENTE/CONF':'Nunca confirmó (cliente fantasma)'};
     const cinv=v=>'<span class="'+(v>=35?'neg':v>=25?'warn':'')+'">'+v+'%</span>';
     const via=Object.entries(ND.rescate_via||{}).map(([k,v])=>v+' '+k).join(', ');
-    let h='<div style="font-size:13px;margin-bottom:12px;line-height:1.5">De <b>'+ND.total+'</b> no despachados, <b class="pos">'+ND.rescatados+'</b> fueron <b>re-ruteados</b> (recreados, no perdidos'+(via?': '+via:'')+'). <b class="neg">Pérdida real: '+ND.perdidos+'</b>.<br>El <b>'+ND.con_transportadora_pct+'%</b> tenía transportadora → <b>no es cobertura</b>, es confirmación.</div>';
+    let h='<div style="font-size:13px;margin-bottom:12px;line-height:1.5">De <b>'+ND.total+'</b> no despachados, <b class="pos">'+ND.rescatados+'</b> fueron <b>re-ruteados</b> (recreados, no perdidos'+(via?': '+via:'')+'). <b class="neg">Pérdida real: '+ND.perdidos+'</b>.<br>El <b>'+ND.con_transportadora_pct+'%</b> tenía transportadora → <b>no es cobertura</b>. <b>Cancela / nunca confirma</b> = el cliente (confirmación); <b>Rechazado</b> lo pone el <b>proveedor</b> (reclamable, ver abajo).</div>';
     h+='<table><tr><th>Tipo de caída</th><th>Total</th><th>Re-ruteado</th><th>Pérdida real</th></tr>';
     Object.entries(ND.tipo).sort((a,b)=>b[1].total-a[1].total).forEach(([t,x])=>h+='<tr><td>'+(tl[t]||t)+'</td><td>'+x.total+'</td><td class="pos">'+x.rescatado+'</td><td class="neg">'+x.perdido+'</td></tr>');
     h+='</table><div style="font-size:13px;margin:14px 0 6px;color:var(--muted)">Departamentos con mayor tasa de PÉRDIDA REAL (foco geográfico):</div>';
     h+='<table><tr><th>Departamento</th><th>Perdidos</th><th>Total</th><th>Tasa</th></tr>';
     ND.top_departamentos.forEach(d=>h+='<tr><td>'+d.depto+'</td><td>'+d.perdido+'</td><td>'+d.total+'</td><td>'+cinv(d.tasa)+'</td></tr>');
     document.getElementById('noDespacho').innerHTML=h+'</table>';
+  }
+  const RC=L.rechazados;
+  if(RC){
+    let h='<div style="font-size:13px;margin-bottom:12px;line-height:1.5"><b class="neg">'+RC.total+' rechazados</b> ('+f0(RC.valor)+'). Este estado lo pone el <b>proveedor</b>, no el cliente → es <b>reclamable</b>. <b class="warn">'+RC.sin_guia+'</b> sin número de guía (argumento fuerte: ¿de verdad se intentó entregar?). Detalle por pedido en <code>'+RC.archivo+'</code>.</div>';
+    h+='<table><tr><th>Transportadora</th><th>Rechazados</th><th>Valor a reclamar</th></tr>';
+    RC.por_transportadora.forEach(x=>h+='<tr><td>'+x.transp+'</td><td>'+x.n+'</td><td>'+f0(x.valor)+'</td></tr>');
+    document.getElementById('rechazados').innerHTML=h+'</table>';
   }
   const T=L.transportadoras;
   document.getElementById('ttransp').innerHTML='<tr><th>Transportadora</th><th>Desp.</th><th>Entreg.</th><th>Devol.</th><th>% entrega</th><th>% devol</th><th>Costo devol.</th></tr>'+

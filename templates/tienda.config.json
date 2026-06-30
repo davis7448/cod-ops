@@ -47,7 +47,8 @@
     "cogs": "PRECIO PROVEEDOR X CANTIDAD",
     "departamento": "DEPARTAMENTO DESTINO",
     "ciudad": "CIUDAD DESTINO",
-    "transportadora": "TRANSPORTADORA"
+    "transportadora": "TRANSPORTADORA",
+    "guia": "NÚMERO GUIA"
   },
 
   "estatus": {
