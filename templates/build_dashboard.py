@@ -229,6 +229,14 @@ function renderLog(){
   const RC=L.rechazados;
   if(RC){
     let h='<div style="font-size:13px;margin-bottom:12px;line-height:1.5"><b class="neg">'+RC.total+' rechazados</b> ('+f0(RC.valor)+'). Lo pone el <b>proveedor</b>, no el cliente → <b>reclamable</b>. Causa típica: <b>sin stock</b> o <b>guía con error</b>. <b class="warn">'+RC.sin_guia+' sin número de guía</b> = nunca se despacharon. Detalle por pedido en <code>'+RC.archivo+'</code>.</div>';
+    const R=RC.resolucion;
+    if(R){h+='<div style="font-size:13px;margin:4px 0 6px;color:var(--muted)">Estado del reclamo (lo actualizas cuando el proveedor responde):</div>';
+      h+='<table><tr><th>Estado</th><th>Pedidos</th><th>Valor</th></tr>'+
+        '<tr><td>⏳ Pendiente</td><td class="warn">'+R.pendiente_n+'</td><td>'+f0(R.pendiente_val)+'</td></tr>'+
+        '<tr><td>✅ Aprobado</td><td class="pos">'+R.aprobado_n+'</td><td class="pos">'+f0(R.aprobado_val)+'</td></tr>'+
+        '<tr><td>❌ Rechazado</td><td class="neg">'+R.rechazado_n+'</td><td>'+f0(R.rechazado_val)+'</td></tr></table>'+
+        '<div style="font-size:13px;margin:6px 0 12px"><b class="pos">Recuperado: '+f0(R.valor_reconocido)+'</b> de '+f0(RC.valor)+'</div>';
+    }
     h+='<table><tr><th>Transportadora</th><th>Rechazados</th><th>Valor a reclamar</th></tr>';
     RC.por_transportadora.forEach(x=>h+='<tr><td>'+x.transp+'</td><td>'+x.n+'</td><td>'+f0(x.valor)+'</td></tr>');
     document.getElementById('rechazados').innerHTML=h+'</table>';

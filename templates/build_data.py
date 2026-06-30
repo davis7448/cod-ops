@@ -2,7 +2,7 @@
 """Motor de datos del dashboard COD (genérico, plugin cod-ops).
 Lee tienda.config.json (mismo directorio) + reportes Dropi -> data.json.
 Uso: python3 build_data.py [ruta/al/tienda.config.json]"""
-import openpyxl, json, os, sys
+import openpyxl, json, os, sys, csv
 from collections import defaultdict
 from datetime import datetime
 
@@ -73,7 +73,7 @@ for f in REPORTES:
             nod_records.append((pho, prod, bk, dp_all, g(r, "transportadora"), mk))
             if s == "RECHAZADO":
                 rechazados_rows.append((str(g(r, "transportadora") or "N/D").strip().upper(),
-                    num(g(r, "total")), mk, g(r, "guia") not in (None, "")))
+                    num(g(r, "total")), mk, g(r, "guia") not in (None, ""), str(oid)))
         if s == "ENTREGADO":
             cells[k]["ingreso"] += num(g(r, "total")) - num(g(r, "cogs")) - fl
             cells[k]["cogs"] += num(g(r, "cogs")); cells[k]["flete"] += fl
@@ -197,13 +197,29 @@ no_despacho = {"total": nod_total, "rescatados": resc_total, "perdidos": nod_tot
        if dept_total[d] >= 15][:10]}
 # rechazados: estado que pone el PROVEEDOR → reclamable (no es rechazo del cliente)
 rch_transp = defaultdict(lambda: [0, 0.0]); rch_mes = defaultdict(int)
-for t, v, mk2, guia in rechazados_rows:
+for t, v, mk2, guia, oid in rechazados_rows:
     rch_transp[t][0] += 1; rch_transp[t][1] += v; rch_mes[mk2] += 1
+# seguimiento de reclamos: reclamos_estado.csv (lo alimenta el operador cuando el proveedor responde)
+estado_by_id = {}
+ECSV = os.path.join(os.path.dirname(CFG_PATH), "reclamos_estado.csv")
+if os.path.exists(ECSV):
+    for row in csv.DictReader(open(ECSV)): estado_by_id[row["ID"]] = row
+resol = {"pendiente": [0, 0.0], "aprobado": [0, 0.0], "rechazado": [0, 0.0]}; recon = 0.0
+for t, v, mk2, guia, oid in rechazados_rows:
+    e = (estado_by_id.get(oid, {}).get("estado") or "pendiente").strip().lower()
+    if e not in resol: e = "pendiente"
+    resol[e][0] += 1; resol[e][1] += v
+    if e == "aprobado":
+        try: recon += float(estado_by_id.get(oid, {}).get("valor_reconocido") or 0)
+        except: pass
 rechazados = {"total": len(rechazados_rows), "valor": round(sum(x[1] for x in rechazados_rows)),
    "sin_guia": sum(1 for x in rechazados_rows if not x[3]),
    "por_transportadora": [{"transp": t, "n": d[0], "valor": round(d[1])}
        for t, d in sorted(rch_transp.items(), key=lambda x: -x[1][0])],
-   "por_mes": dict(sorted(rch_mes.items())), "archivo": "reclamos_rechazados.xlsx"}
+   "por_mes": dict(sorted(rch_mes.items())), "archivo": "reclamos_rechazados.xlsx",
+   "resolucion": {"pendiente_n": resol["pendiente"][0], "aprobado_n": resol["aprobado"][0], "rechazado_n": resol["rechazado"][0],
+       "pendiente_val": round(resol["pendiente"][1]), "aprobado_val": round(resol["aprobado"][1]), "rechazado_val": round(resol["rechazado"][1]),
+       "valor_reconocido": round(recon)}}
 logistica = {"transportadoras": transportadoras, "departamentos": departamentos,
              "matriz_ciudad_transp": matriz, "ruteo": CFG["ruteo"], "no_despacho": no_despacho,
              "rechazados": rechazados}
