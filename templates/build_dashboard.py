@@ -228,7 +228,7 @@ function renderLog(){
   }
   const RC=L.rechazados;
   if(RC){
-    let h='<div style="font-size:13px;margin-bottom:12px;line-height:1.5"><b class="neg">'+RC.total+' rechazados</b> ('+f0(RC.valor)+'). Este estado lo pone el <b>proveedor</b>, no el cliente → es <b>reclamable</b>. <b class="warn">'+RC.sin_guia+'</b> sin número de guía (argumento fuerte: ¿de verdad se intentó entregar?). Detalle por pedido en <code>'+RC.archivo+'</code>.</div>';
+    let h='<div style="font-size:13px;margin-bottom:12px;line-height:1.5"><b class="neg">'+RC.total+' rechazados</b> ('+f0(RC.valor)+'). Lo pone el <b>proveedor</b>, no el cliente → <b>reclamable</b>. Causa típica: <b>sin stock</b> o <b>guía con error</b>. <b class="warn">'+RC.sin_guia+' sin número de guía</b> = nunca se despacharon. Detalle por pedido en <code>'+RC.archivo+'</code>.</div>';
     h+='<table><tr><th>Transportadora</th><th>Rechazados</th><th>Valor a reclamar</th></tr>';
     RC.por_transportadora.forEach(x=>h+='<tr><td>'+x.transp+'</td><td>'+x.n+'</td><td>'+f0(x.valor)+'</td></tr>');
     document.getElementById('rechazados').innerHTML=h+'</table>';
