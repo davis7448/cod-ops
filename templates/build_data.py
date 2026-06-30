@@ -99,7 +99,8 @@ for mk in sorted(set(k[0] for k in cells)):
         if (mk, prod) not in cells: continue
         m = prod_metrics(mk, prod); prods[prod] = m
         for kk in ["ordenes", "entregadas", "devueltas", "transito", "despachadas", "ingreso",
-                   "cogs", "flete", "pauta", "confirmaciones", "comision", "impuesto", "total_entregado"]:
+                   "cogs", "flete", "pauta", "confirmaciones", "comision", "impuesto", "total_entregado",
+                   "canceladas", "rechazadas", "pend_conf"]:
             tot[kk] += m[kk]
     apps = APPS.get(mk, 0)
     pauta_total = sum(PAUTA.get(mk, {}).values())
@@ -113,7 +114,13 @@ for mk in sorted(set(k[0] for k in cells)):
         m["margen"] = round(m["utilidad"] / m["ingreso"] * 100, 1) if m["ingreso"] else 0
     sh = SHOPIFY_ORD.get(mk, 0)
     no_desp = sum(prods[p]["canceladas"] + prods[p]["rechazadas"] + prods[p]["pend_conf"] for p in prods)
-    meses[mk] = {"shopify_orders": sh, "provisional": mk in PROVISIONAL,
+    resuelt = tot["despachadas"] + tot["canceladas"] + tot["rechazadas"] + tot["pend_conf"]
+    confirmacion = {"resueltas": int(resuelt), "despachadas": int(tot["despachadas"]),
+        "canceladas": int(tot["canceladas"]), "rechazadas": int(tot["rechazadas"]),
+        "pend_conf": int(tot["pend_conf"]), "generadas_shopify": sh,
+        "tasa": round(tot["despachadas"] / resuelt * 100, 1) if resuelt else 0,
+        "tasa_vs_generadas": round(tot["despachadas"] / sh * 100, 1) if sh else None}
+    meses[mk] = {"shopify_orders": sh, "provisional": mk in PROVISIONAL, "confirmacion": confirmacion,
         "sincronizacion": round(tot["ordenes"] / sh * 100, 1) if sh else None,
         "tasa_despacho": round(tot["despachadas"] / (tot["entregadas"] + tot["devueltas"] + no_desp) * 100, 1) if tot["despachadas"] else 0,
         "tasa_entrega": round(tot["entregadas"] / tot["despachadas"] * 100, 1) if tot["despachadas"] else 0,

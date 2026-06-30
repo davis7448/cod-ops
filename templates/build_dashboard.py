@@ -59,6 +59,11 @@ th{color:var(--muted);font-weight:500}
   </div>
   <h2>Logística (resumen del periodo)</h2>
   <div class="kpis" id="log"></div>
+  <h2>Confirmación de pedidos · tendencia <span style="font-size:11px;color:var(--muted)">(despachadas / resueltas, dato Dropi)</span></h2>
+  <div class="grid2">
+    <div class="box"><div style="position:relative;height:230px"><canvas id="chConf"></canvas></div></div>
+    <div class="box"><table id="tconf"></table></div>
+  </div>
   <h2>Rentabilidad por producto</h2>
   <div class="box"><table id="tprod"></table></div>
 </div>
@@ -155,6 +160,28 @@ function drawChart(){
       scales:{x:{ticks:{color:'#8b8f99'},grid:{display:false}},y:{ticks:{color:'#8b8f99',callback:fM},grid:{color:'#2a2e37'}}}}});
 }
 
+let chConf;
+function drawConf(){
+  const ms=MESES.filter(m=>DATA.meses[m].confirmacion);
+  const lab=ms.map(m=>NOM[m]||m);
+  const tasa=ms.map(m=>DATA.meses[m].confirmacion.tasa);
+  const bg=ms.map(m=>DATA.meses[m].provisional?'#eda100':'#3987e5');
+  if(chConf)chConf.destroy();
+  chConf=new Chart(document.getElementById('chConf'),{type:'line',
+    data:{labels:lab,datasets:[{label:'Tasa de confirmación %',data:tasa,borderColor:'#3987e5',
+      backgroundColor:'rgba(57,135,229,.12)',fill:true,tension:.3,
+      pointBackgroundColor:bg,pointRadius:5,pointBorderColor:bg}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const m=ms[c.dataIndex],cf=DATA.meses[m].confirmacion;
+        return [c.raw+'%'+(DATA.meses[m].provisional?' (provisional)':''),'desp '+cf.despachadas+' / resueltas '+cf.resueltas]}}}},
+      scales:{x:{ticks:{color:'#8b8f99'},grid:{display:false}},
+        y:{suggestedMin:50,suggestedMax:100,ticks:{color:'#8b8f99',callback:v=>v+'%'},grid:{color:'#2a2e37'}}}}});
+  let h='<tr><th>Mes</th><th>Confirm.</th><th>Despach.</th><th>Cancel.</th><th>Rechaz.</th><th>Pend.</th></tr>';
+  h+=ms.map(m=>{const c=DATA.meses[m].confirmacion;const pv=DATA.meses[m].provisional?' <span class="warn" style="font-size:10px">prov</span>':'';
+    const cls=c.tasa>=80?'pos':c.tasa>=70?'warn':'neg';
+    return '<tr><td>'+(NOM[m]||m)+pv+'</td><td class="'+cls+'">'+c.tasa+'%</td><td>'+c.despachadas+'</td><td>'+c.canceladas+'</td><td>'+c.rechazadas+'</td><td>'+c.pend_conf+'</td></tr>'}).join('');
+  document.getElementById('tconf').innerHTML=h;
+}
 function chips(id,items,sel,cb){const c=document.getElementById(id);
   items.forEach(it=>{const b=document.createElement('span');b.className='chip'+(it.v===sel?' on':'');b.textContent=it.l;
     b.onclick=()=>{cb(it.v);[...c.querySelectorAll('.chip')].forEach(x=>x.classList.remove('on'));b.classList.add('on');render()};c.appendChild(b)})}
@@ -201,6 +228,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   if(t.dataset.pg==='log')renderLog();
 });
 render();
+drawConf();
 </script></body></html>"""
 
 html = HTML.replace("__DATA__", json.dumps(data, ensure_ascii=False)).replace("__TIENDA__", TIENDA)
