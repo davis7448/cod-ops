@@ -40,6 +40,8 @@ Hasta arreglar el origen, **ignorar ROAS y operar con CPA**.
 
 Acción: **+20% diario** (estándar). **+100% (duplicar)** si el ROAS real es el doble del Target.
 
+> **Definición de las 72h:** son 72h *consecutivas de desempeño* sobre el Target (3 días seguidos), evaluadas 1 vez/día — NO una ventana móvil por hora, ni un cronómetro desde el último cambio/publicación. Están ancladas a la racha de rendimiento (ruido intradía de Meta + fase de aprendizaje). Las 72h son la **puerta de entrada**: una vez dentro, subes +20% **cada 24h** mientras aguante, sin re-esperar 72h por cada subida. Para desescalar, igual: 72h en rojo antes del −20%.
+
 ## Protocolo de DESESCALADO (esperar 72h antes de tocar)
 - Bajo target pero rentable → **−20%/24h** hasta el mínimo de gasto diario.
 - Sobre break-even (perdiendo) → −20% y revisar embudo.
