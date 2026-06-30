@@ -51,6 +51,47 @@ Las tres zonas del CPA por producto:
 - **Las 72h son la puerta de ENTRADA al escalado. Una vez dentro, subes +20% CADA 24h** mientras el rendimiento aguante — NO vuelves a esperar 72h tras cada subida.
 - **Para desescalar es igual de paciente:** necesitas 72h (3 días) seguidos por debajo del Target antes de bajar −20%. "Un mal día es un mal día."
 
+### 🖨️ Checklist imprimible de la revisión diaria
+Genera/usa esta versión rellenando las líneas desde `targets.por_producto` del config:
+
+```
+✅ REVISIÓN DIARIA (15 min) — <TIENDA>
+Una vez al día, mismo horario. No mirar a cada rato (el ruido intradía engaña).
+
+LÍNEAS (recalcular cada cierre):
+  PRODUCTO A   🎯 Target <t>   ⚖️ Break-even <be>   💵 Mín diario <md>
+  PRODUCTO B   🎯 Target <t>   ⚖️ Break-even <be>   💵 Mín diario <md>
+  Gate de entrega COD ≥ <gate_entrega_pct>%
+
+POR CADA PRODUCTO, ubica el CPA de hoy:
+        TARGET                 BREAK-EVEN
+          │                        │
+ ESCALAR  │      SOSTENER          │   CORTAR
+──────────┼────────────────────────┼────────────► CPA
+
+🟢 ¿ESCALAR (+20%)? — marca las TRES o no escalas:
+  [ ] CPA bajo Target 72h seguidas (3 días, no horas)
+  [ ] >70% compras por atribución de clic (solo Meta → ✔ auto)
+  [ ] Entrega ≥ gate
+  → 3 ✔ = +20% (ROAS real duplica target → +100%)
+  → ya escalabas y sigue rentable = +20% otra vez (cada 24h, sin re-esperar 72h)
+
+🟡 ¿SOSTENER (no tocar)? — caso por defecto:
+  - CPA rentable pero arriba del Target, o
+  - CPA bajo Target pero aún sin 72h / entrega < gate
+  → única palanca hoy: creativos nuevos (adset 3:1:1). NO subir presupuesto.
+
+🔴 ¿CORTAR / DESESCALAR (−20%)?
+  [ ] CPA sobre Break-even (perdiendo) 72h seguidas → −20% + revisar embudo
+  - ya en mínimo diario → no bajar más: creativos + auditar funnel
+  - apagar anuncio: solo con bajo gasto + CPA no rentable 3–7 días
+    (NO apagar anuncios que no gastan — pueden despegar al día 5–7)
+
+ANTES DE CERRAR:
+  [ ] Subí ≥1 adset nuevo 3:1:1 (ángulo nuevo)
+  [ ] No forcé gasto ni toqué nada antes de las 72h
+```
+
 ## 🔵 SEMANAL — volumen creativo + higiene
 - **Exploración:** ≥15 conceptos **nuevos** (15 ángulos distintos, cada uno 1 adset 3:1:1), ~30% imágenes. Un concepto = un ángulo nuevo, NO un video con ediciones menores.
 - **Explotación (aparte):** por ganador, 6 variaciones de hook + 6 de formato.
