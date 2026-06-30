@@ -73,6 +73,8 @@ th{color:var(--muted);font-weight:500}
   <div class="box" id="ruteo"></div>
   <h2>Plan de acción por zona</h2>
   <div class="box"><table id="tplan"></table></div>
+  <h2>Motivos de no-despacho <span style="font-size:11px;color:var(--muted)">(¿por qué no se confirma? ¿cobertura?)</span></h2>
+  <div class="box" id="noDespacho"></div>
   <h2>Transportadoras (acumulado)</h2>
   <div class="box"><table id="ttransp"></table></div>
   <h2>Peores zonas — departamentos</h2>
@@ -132,7 +134,7 @@ function render(){
   document.getElementById('pyg').innerHTML='<tr><th>Concepto</th><th>'+(DATA.moneda||'COP')+'</th></tr>'+rows.map(r=>`<tr><td>${r[0]}</td><td class="${r[2]||''}">${f0(r[1])}</td></tr>`).join('');
   document.getElementById('log').innerHTML=`
     ${gauge('Sincronización',o.sincronizacion)}
-    ${gauge('Despacho',o.tasa_despacho)}
+    ${gauge('Confirmación',o.tasa_despacho)}
     ${gauge('Entrega',o.tasa_entrega)}
     ${kpi('Devolución',pct(o.tasa_devol),o.tasa_devol>30?'neg':'')}`;
   const ps=Object.keys(o.prods).filter(p=>o.prods[p].ingreso!==0||o.prods[p].pauta!==0);
@@ -209,6 +211,18 @@ function renderLog(){
       '<td>'+(z.alt&&z.alt!=='—'?z.alt+(z.tasa_alt?' <span style="color:var(--muted);font-size:11px">('+z.tasa_alt+'%·n='+z.n+')</span>':''):'—')+'</td>'+
       '<td><span class="'+(cf[z.confianza]||'')+'" style="font-size:12px">'+z.confianza+'</span></td></tr>').join('')
     : '<tr><td style="color:var(--muted)">Sin plan de zonas configurado.</td></tr>';
+  const ND=L.no_despacho;
+  if(ND){
+    const tl={'CANCELADO':'Canceló (echó para atrás)','RECHAZADO':'Rechazó (puerta / no estaba)','PENDIENTE/CONF':'Nunca confirmó (fantasma)'};
+    const cinv=v=>'<span class="'+(v>=35?'neg':v>=25?'warn':'')+'">'+v+'%</span>';
+    let h='<div style="font-size:13px;margin-bottom:12px;line-height:1.5">De <b>'+ND.total+'</b> pedidos no despachados, el <b class="pos">'+ND.con_transportadora_pct+'%</b> tenía transportadora asignada → <b>no es cobertura</b>, la transportadora sí llegaba. La caída es de <b>confirmación</b> (el cliente no completó).</div>';
+    h+='<table><tr><th>Tipo de caída</th><th>Pedidos</th><th>%</th></tr>';
+    Object.entries(ND.tipo).sort((a,b)=>b[1]-a[1]).forEach(([t,n])=>h+='<tr><td>'+(tl[t]||t)+'</td><td>'+n+'</td><td>'+Math.round(n/ND.total*100)+'%</td></tr>');
+    h+='</table><div style="font-size:13px;margin:14px 0 6px;color:var(--muted)">Departamentos con mayor tasa de no-despacho (foco geográfico):</div>';
+    h+='<table><tr><th>Departamento</th><th>No desp.</th><th>Total</th><th>Tasa</th></tr>';
+    ND.top_departamentos.forEach(d=>h+='<tr><td>'+d.depto+'</td><td>'+d.nod+'</td><td>'+d.total+'</td><td>'+cinv(d.tasa)+'</td></tr>');
+    document.getElementById('noDespacho').innerHTML=h+'</table>';
+  }
   const T=L.transportadoras;
   document.getElementById('ttransp').innerHTML='<tr><th>Transportadora</th><th>Desp.</th><th>Entreg.</th><th>Devol.</th><th>% entrega</th><th>% devol</th><th>Costo devol.</th></tr>'+
     Object.entries(T).sort((a,b)=>b[1].despachadas-a[1].despachadas).map(([t,x])=>'<tr><td>'+t+'</td><td>'+x.despachadas+'</td><td>'+x.entregadas+'</td><td>'+x.devueltas+'</td><td>'+colpct(x.tasa_entrega)+'</td><td class="'+(x.tasa_devolucion>30?'neg':'')+'">'+x.tasa_devolucion+'%</td><td>'+f0(x.costo_devoluciones)+'</td></tr>').join('');

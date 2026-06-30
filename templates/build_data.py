@@ -40,6 +40,7 @@ seen = set()
 cells = defaultdict(lambda: defaultdict(float)); cnt = defaultdict(lambda: defaultdict(int))
 transp = defaultdict(lambda: defaultdict(float)); depto = defaultdict(lambda: defaultdict(float))
 ciudad_tr = defaultdict(lambda: defaultdict(lambda: [0, 0]))
+nod_tipo = defaultdict(int); nod_carrier = defaultdict(int); nod_depto = defaultdict(lambda: [0, 0])
 
 for f in REPORTES:
     if not os.path.exists(f): continue
@@ -54,6 +55,14 @@ for f in REPORTES:
         except: continue
         prod = fam(g(r, "producto")); s = str(g(r, "estatus")); fl = num(g(r, "flete")); k = (mk, prod)
         cnt[k][s] += 1; cnt[k]["_t"] += 1
+        dp_all = str(g(r, "departamento") or "N/D").strip().upper()
+        nod_depto[dp_all][1] += 1
+        if s in NODESP:
+            nod_depto[dp_all][0] += 1
+            bk = "CANCELADO" if s == "CANCELADO" else ("RECHAZADO" if s == "RECHAZADO" else "PENDIENTE/CONF")
+            nod_tipo[bk] += 1
+            tr_nd = g(r, "transportadora")
+            nod_carrier["con" if tr_nd not in (None, "") else "sin"] += 1
         if s == "ENTREGADO":
             cells[k]["ingreso"] += num(g(r, "total")) - num(g(r, "cogs")) - fl
             cells[k]["cogs"] += num(g(r, "cogs")); cells[k]["flete"] += fl
@@ -146,8 +155,15 @@ for ci, trs in ciudad_tr.items():
     matriz[ci] = {t: {"desp": v[0], "entrega": round(v[1] / v[0] * 100, 1) if v[0] >= 4 else None}
                   for t, v in trs.items() if v[0] >= 4}
 
+nod_total = sum(nod_tipo.values())
+no_despacho = {"total": nod_total, "tipo": dict(nod_tipo),
+   "con_transportadora_pct": round(nod_carrier.get("con", 0) / nod_total * 100, 1) if nod_total else 0,
+   "sin_transportadora": nod_carrier.get("sin", 0),
+   "top_departamentos": [{"depto": d, "nod": v[0], "total": v[1], "tasa": round(v[0] / v[1] * 100, 1)}
+       for d, v in sorted(nod_depto.items(), key=lambda x: -(x[1][0] / x[1][1] if x[1][1] else 0))
+       if v[1] >= 15][:10]}
 logistica = {"transportadoras": transportadoras, "departamentos": departamentos,
-             "matriz_ciudad_transp": matriz, "ruteo": CFG["ruteo"]}
+             "matriz_ciudad_transp": matriz, "ruteo": CFG["ruteo"], "no_despacho": no_despacho}
 
 data = {"tienda": CFG["tienda"]["nombre"], "meses_nombre": CFG.get("dashboard", {}).get("meses_nombre", {}),
         "productos": list(PRODUCTOS.keys()), "meses": meses,
