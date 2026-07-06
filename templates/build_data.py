@@ -80,7 +80,9 @@ for f in REPORTES:
             cells[k]["tot_ent"] += num(g(r, "total")); cells[k]["ent"] += 1
         elif s in DEV: cells[k]["ingreso"] -= fl; cells[k]["dev"] += 1
         elif s in NODESP: pass
-        else: cells[k]["ingreso"] -= fl; cells[k]["tran"] += 1
+        else:
+            cells[k]["ingreso"] -= fl; cells[k]["tran"] += 1
+            cells[k]["open_total"] += num(g(r, "total")); cells[k]["open_margin"] += num(g(r, "total")) - num(g(r, "cogs"))
         if s == "ENTREGADO" or s in DEV:
             t = str(g(r, "transportadora") or "N/D").strip().upper()
             dp = str(g(r, "departamento") or "N/D").strip().upper()
@@ -120,7 +122,13 @@ def prod_metrics(mk, prod):
         tasa_devolucion=round(dev / desp * 100, 1) if desp else 0,
         ingreso=ingreso, cogs=round(c.get("cogs", 0)), flete=round(c.get("flete", 0)),
         total_entregado=round(tot_ent), pauta=pauta, confirmaciones=conf, comision=com, impuesto=imp,
+        open_total=round(c.get("open_total", 0)), open_margin=round(c.get("open_margin", 0)),
         cpa=round(pauta / cc["_t"]) if cc["_t"] else 0)
+
+# tasa de entrega GLOBAL (fallback para meses muy nuevos sin resueltos)
+g_ent = sum(int(cells[k].get("ent", 0)) for k in cells)
+g_dev = sum(int(cells[k].get("dev", 0)) for k in cells)
+GLOBAL_P = g_ent / (g_ent + g_dev) if (g_ent + g_dev) else 0
 
 meses = {}
 for mk in sorted(set(k[0] for k in cells)):
@@ -131,7 +139,7 @@ for mk in sorted(set(k[0] for k in cells)):
         m = prod_metrics(mk, prod); prods[prod] = m
         for kk in ["ordenes", "entregadas", "devueltas", "transito", "despachadas", "ingreso",
                    "cogs", "flete", "pauta", "confirmaciones", "comision", "impuesto", "total_entregado",
-                   "canceladas", "rechazadas", "pend_conf"]:
+                   "canceladas", "rechazadas", "pend_conf", "open_total", "open_margin"]:
             tot[kk] += m[kk]
     apps = APPS.get(mk, 0)
     pauta_total = sum(PAUTA.get(mk, {}).values())
@@ -144,6 +152,11 @@ for mk in sorted(set(k[0] for k in cells)):
         m["utilidad"] = m["ingreso"] - m["pauta"] - m["confirmaciones"] - m["comision"] - m["impuesto"] - m["apps"]
         m["margen"] = round(m["utilidad"] / m["ingreso"] * 100, 1) if m["ingreso"] else 0
     sh = SHOPIFY_ORD.get(mk, 0)
+    # utilidad ESPERADA: proyecta los abiertos (tránsito) entregando a la tasa resuelta del mes
+    resolved = tot["entregadas"] + tot["devueltas"]
+    p_ent = tot["entregadas"] / resolved if resolved >= 10 else GLOBAL_P
+    add_ing = p_ent * tot["open_margin"]
+    util_esperada = util_total + add_ing - 0.02 * p_ent * tot["open_total"] - 0.004 * add_ing
     no_desp = sum(prods[p]["canceladas"] + prods[p]["rechazadas"] + prods[p]["pend_conf"] for p in prods)
     resuelt = tot["despachadas"] + tot["canceladas"] + tot["rechazadas"] + tot["pend_conf"]
     resc_m = rescued_month.get(mk, 0)
@@ -164,6 +177,8 @@ for mk in sorted(set(k[0] for k in cells)):
                 "pauta": round(tot["pauta"]), "confirmaciones": round(tot["confirmaciones"]),
                 "comision": round(tot["comision"]), "impuesto": round(tot["impuesto"]), "apps": apps,
                 "pauta_huerfana": pauta_huerfana, "utilidad": round(util_total),
+                "utilidad_esperada": round(util_esperada), "proj_tasa": round(p_ent * 100, 1),
+                "open_n": int(tot["transito"]), "open_valor": round(tot["open_total"]),
                 "margen": round(util_total / tot["ingreso"] * 100, 1) if tot["ingreso"] else 0}}
 
 def tasas(d):

@@ -119,17 +119,20 @@ function agg(){
   o.tasa_despacho=o.shopify?o.despachadas/o.ordenes*100:0;
   o.margen=o.ingreso?o.utilidad/o.ingreso*100:0;
   o.cpa=o.ordenes?o.pauta/o.ordenes:0;
+  o.utilidad_esperada=o.utilidad; o.open_n=0; o.open_valor=0;
+  ms.forEach(m=>{const pg=DATA.meses[m].pyg; o.utilidad_esperada+=(pg.utilidad_esperada!=null?pg.utilidad_esperada:pg.utilidad)-pg.utilidad; o.open_n+=pg.open_n||0; o.open_valor+=pg.open_valor||0;});
   o.prods=prod;
   return o;
 }
 
 function render(){
   const o=agg();
-  document.getElementById('provbox').innerHTML = o.prov?'<div class="prov">⚠ Periodo provisional: las entregas aún maduran (parte en tránsito) mientras la pauta ya está cargada. No representa el resultado final.</div>':'';
+  const hayProy=o.open_n>0 && Math.abs(o.utilidad_esperada-o.utilidad)>1000;
+  document.getElementById('provbox').innerHTML = o.prov?'<div class="prov">⚠ Periodo provisional: '+o.open_n+' pedidos abiertos ('+f0(o.open_valor)+') aún en tránsito. La <b>utilidad cruda</b> los cuenta como costo sin sumar su ingreso → engaña. Mira la <b>utilidad esperada</b> (proyecta esos abiertos entregando a la tasa real del periodo).</div>':'';
   document.getElementById('kpis').innerHTML=`
     ${kpi('Ingreso neto',f0(o.ingreso))}
-    ${kpi('Utilidad',f0(o.utilidad),o.utilidad<0?'neg':'pos')}
-    ${kpi('Margen',o.margen.toFixed(1)+'%',o.margen<0?'neg':'pos')}
+    ${kpi(hayProy?'Utilidad (cruda)':'Utilidad',f0(o.utilidad),o.utilidad<0?'neg':'pos')}
+    ${hayProy?kpi('Utilidad esperada',f0(o.utilidad_esperada),o.utilidad_esperada<0?'neg':'pos'):kpi('Margen',o.margen.toFixed(1)+'%',o.margen<0?'neg':'pos')}
     ${kpi('Pauta',f0(o.pauta))}
     ${kpi('CPA',f0(o.cpa))}`;
   const rows=[['Ingreso neto',o.ingreso,'pos'],['− Pauta',-o.pauta],['− Confirmaciones',-o.confirmaciones],['− Comisión',-o.comision],['− Impuesto',-o.impuesto],['− Apps',-o.apps],['= Utilidad',o.utilidad,o.utilidad<0?'neg':'pos']];
@@ -153,12 +156,12 @@ let chart;
 function drawChart(){
   const lab=MESES.map(m=>NOM[m]||m);
   const ing=MESES.map(m=>DATA.meses[m].pyg.ingreso);
-  const ut=MESES.map(m=>DATA.meses[m].pyg.utilidad);
+  const ut=MESES.map(m=>{const pg=DATA.meses[m].pyg;return pg.utilidad_esperada!=null?pg.utilidad_esperada:pg.utilidad});
   if(chart)chart.destroy();
   chart=new Chart(document.getElementById('chMes'),{type:'bar',
     data:{labels:lab,datasets:[
       {label:'Ingreso',data:ing,backgroundColor:'#3987e5',borderRadius:4},
-      {label:'Utilidad',data:ut,backgroundColor:ut.map(v=>v<0?'#e34948':'#1baf7a'),borderRadius:4}]},
+      {label:'Utilidad (esperada en provisionales)',data:ut,backgroundColor:ut.map(v=>v<0?'#e34948':'#1baf7a'),borderRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{labels:{color:'#8b8f99',boxWidth:10}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fM(c.raw)}}},
       scales:{x:{ticks:{color:'#8b8f99'},grid:{display:false}},y:{ticks:{color:'#8b8f99',callback:fM},grid:{color:'#2a2e37'}}}}});
