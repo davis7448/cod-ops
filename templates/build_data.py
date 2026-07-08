@@ -168,8 +168,10 @@ for mk in sorted(set(k[0] for k in cells)):
         "tasa": round(tot["despachadas"] / resuelt_net * 100, 1) if resuelt_net else 0,
         "tasa_bruta": round(tot["despachadas"] / resuelt * 100, 1) if resuelt else 0,
         "tasa_vs_generadas": round(tot["despachadas"] / sh * 100, 1) if sh else None}
+    ordenes_netas = int(tot["ordenes"]) - resc_m  # descuenta recreaciones intra-Dropi (id nuevo por cambio transp/cant)
     meses[mk] = {"shopify_orders": sh, "provisional": mk in PROVISIONAL, "confirmacion": confirmacion,
-        "sincronizacion": round(tot["ordenes"] / sh * 100, 1) if sh else None,
+        "ordenes_netas": ordenes_netas, "recreaciones": resc_m,
+        "sincronizacion": round(ordenes_netas / sh * 100, 1) if sh else None,
         "tasa_despacho": round(tot["despachadas"] / resuelt_net * 100, 1) if resuelt_net else 0,
         "tasa_entrega": round(tot["entregadas"] / tot["despachadas"] * 100, 1) if tot["despachadas"] else 0,
         "productos": prods,

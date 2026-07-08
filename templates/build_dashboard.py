@@ -115,7 +115,9 @@ function agg(){
   if(selProd==='ALL'){ms.forEach(m=>{const h=DATA.meses[m].pyg.pauta_huerfana||0;o.pauta+=h;o.utilidad-=h;});}
   o.tasa_entrega=o.despachadas?o.entregadas/o.despachadas*100:0;
   o.tasa_devol=o.despachadas?o.devueltas/o.despachadas*100:0;
-  o.sincronizacion=o.shopify?o.ordenes/o.shopify*100:null;
+  o.recreaciones=0; ms.forEach(m=>o.recreaciones+=DATA.meses[m].recreaciones||0);
+  o.ordenes_netas=o.ordenes-o.recreaciones;
+  o.sincronizacion=o.shopify?o.ordenes_netas/o.shopify*100:null;
   o.tasa_despacho=o.shopify?o.despachadas/o.ordenes*100:0;
   o.margen=o.ingreso?o.utilidad/o.ingreso*100:0;
   o.cpa=o.ordenes?o.pauta/o.ordenes:0;
