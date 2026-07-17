@@ -117,7 +117,7 @@ function agg(){
   o.tasa_devol=o.despachadas?o.devueltas/o.despachadas*100:0;
   o.recreaciones=0; ms.forEach(m=>o.recreaciones+=DATA.meses[m].recreaciones||0);
   o.ordenes_netas=o.ordenes-o.recreaciones;
-  o.sincronizacion=o.shopify?o.ordenes_netas/o.shopify*100:null;
+  o.sincronizacion=(selProd==='ALL'&&o.shopify)?o.ordenes_netas/o.shopify*100:null;  // sync es métrica de mes, no por producto (Shopify no está separado por producto)
   o.tasa_despacho=o.shopify?o.despachadas/o.ordenes*100:0;
   o.margen=o.ingreso?o.utilidad/o.ingreso*100:0;
   o.cpa=o.ordenes?o.pauta/o.ordenes:0;
