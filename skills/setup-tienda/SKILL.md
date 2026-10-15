@@ -58,6 +58,20 @@ Onboarda una tienda nueva para el sistema `cod-ops`. Al terminar, el proyecto ti
 
 9. **Guardar en memoria de proyecto** los números clave (AOV, break-even, targets por producto, IDs de cuenta) para arranques en frío.
 
+## Alta de una familia nueva (tienda ya montada, producto por lanzar)
+
+Hazlo **antes de prender la primera campaña**, para que el producto aparezca en el dashboard y en `/cod-ops:diario` desde el día 1.
+
+1. **Keywords** en `productos.<FAMILIA>`: el nombre de la landing, variantes con y sin tilde, el nombre del listing del proveedor (ej. `"MARCADORES MAGICOS", "MARCADORES MÁGICOS", "MARCADOR", "LINEAR COLOR PEN"`). Revisa que ninguna keyword choque con otra familia (substring).
+2. **Metas estimadas** en `targets.por_producto.<FAMILIA>`: `target_cpa`, `break_even`, `min_diario` y un `_doc` que diga de dónde salen (costo, flete, tasas, mezcla de packs) y que son **estimados pre-lanzamiento**.
+   - Break-even por pedido: `0,8 × [0,9 × (precio − costo − flete) − 0,1 × (flete + flete_dev)]` (80 % despacho, 90 % entrega, salvo que la tienda tenga tasas propias). Pondéralo por la mezcla de packs esperada.
+   - `target_cpa` ≈ 55–60 % del break-even; `min_diario` ≈ 3 × target (lo que Meta necesita para aprender).
+3. El config es JSON fuera de un repo con arnés: si el hook SDD lo bloquea, pide `/sdd:sdd-bypass` y crea `contabilidad/.sdd/bypass.json` con Write (para renovarla: `rm -r contabilidad/.sdd` y créala de nuevo).
+4. Regenera (`build_data.py` + `build_dashboard.py`) y verifica que la familia aparezca.
+5. **Al primer cierre maduro** (mes con <5 % en tránsito) recalcula con `/cod-ops:rentabilidad` y reemplaza las metas estimadas por las reales; actualiza el `_doc`.
+
+Ejemplo: `MARCADORES` → target 19.000 · break-even 31.900 · min_diario 60.000 (mezcla 30/55/15 de packs $59.900/$89.900/$119.900).
+
 ## Resultado
 - `contabilidad/tienda.config.json` lleno y validado + todos los scripts.
 - `dashboard.html` generado (P&G, confirmación neta, no-despacho con recreaciones, rechazados, utilidad esperada en provisionales).
