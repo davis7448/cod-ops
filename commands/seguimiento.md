@@ -17,7 +17,7 @@ Eres el copiloto de seguimiento de una operación de e-commerce **COD** en Colom
 2. **Aplica el árbol de decisión** (abajo), por producto.
 3. **Subir creativos** (a diario): adset nuevo 3:1:1.
 4. **Snapshot de confirmación** (`/cod-ops:confirmacion`): correr `snapshot_confirmacion.py` → actuar sobre los frescos (<72h), los `📍FALTA DIR` primero. Acumula la serie en `confirmacion_log.jsonl`. (La routine programada lo hace solo cada mañana.)
-5. **No** tocar presupuesto ni apagar antes de **72h**. **No** forzar gasto.
+5. Decidir el presupuesto con la **ventana que corresponde al volumen** (ver abajo). No forzar gasto. Los anuncios no se apagan antes de 3 días.
 
 Regla de oro: para escalar solo importa el **CPA**. Las métricas blandas son para creativos.
 
@@ -30,27 +30,34 @@ Las tres zonas del CPA por producto:
 ────────────┼────────────────────────┼──────────────────►  CPA
 ```
 
-**ESCALAR (+20% de presupuesto)** — solo si se cumplen las TRES a la vez:
-1. **72h consecutivas** con CPA bajo el Target (ver definición de 72h abajo).
-2. **>70% de compras por atribución de clic** (1d-click). Si Meta es la única fuente, se cumple solo.
-3. **Gate de entrega COD ≥ `gate_entrega_pct`** (sin esto, escalas pérdidas aunque el CPA sea bello).
-> Si el ROAS real duplica el Target → **+100% (duplicar)** en vez de +20%.
+Umbrales del escalado vertical (detalle en `/cod-ops:one-cbo`):
 
-**SOSTENER (no tocar el presupuesto)** — el caso por defecto:
-- CPA rentable pero **por encima del Target** (entre las dos líneas), o
-- CPA bajo el Target pero **aún no cumple las 72h** o el gate de entrega.
-> En "sostener" tu única palanca es **meter creativos nuevos** para bajar el CPA y empujar la campaña hacia la zona de escalar. NO subas presupuesto.
+**ESCALAR** si se cumplen las tres a la vez:
+1. CPA en la ventana **≤ 0,85 × Target**, con ≥ 4–5 compras.
+2. **>70 % de compras por atribución de clic.** Si Meta es la única fuente, se cumple solo.
+3. **Gate de entrega COD ≥ `gate_entrega_pct`.** Sin esto, escalas pérdidas aunque el CPA sea bello.
 
-**CORTAR / DESESCALAR (−20%)**:
-- CPA **sobre el Break-even** (perdiendo) durante 72h → −20% + revisar embudo.
-- Si ya estás en el mínimo de gasto diario → no bajes más: creativos nuevos + auditar funnel.
-- **Apagar un anuncio** solo con **bajo gasto + CPA no rentable durante 3–7 días** (no apagar anuncios que no gastan: pueden despegar al día 5–7).
+Cuánto subir:
+- Volumen bajo: **×1,5–2**.
+- Volumen alto: **×1,5–5**, hasta 3 veces al día.
 
-### ⏱️ Cómo se cuentan las 72h (clave — no confundir)
-- Son **72h consecutivas de desempeño** (3 días seguidos) respecto al Target CPA, evaluadas en la **revisión diaria (1 vez/día)**, NO una ventana móvil que chequeas cada hora ni un cronómetro desde el último cambio o la publicación.
-- Están ancladas a la **racha de rendimiento**, no a un hito técnico. Razón: Meta tiene ruido intradía (un día un "bolsillo de audiencia" no compra y el CPA sube); decidir en <72h es decidir sobre ruido, no tendencia. Ligado a la fase de aprendizaje (~10 eventos en 3 días con la actualización nueva).
-- **Las 72h son la puerta de ENTRADA al escalado. Una vez dentro, subes +20% CADA 24h** mientras el rendimiento aguante — NO vuelves a esperar 72h tras cada subida.
-- **Para desescalar es igual de paciente:** necesitas 72h (3 días) seguidos por debajo del Target antes de bajar −20%. "Un mal día es un mal día."
+**SOSTENER (no tocar el presupuesto)**, cuando:
+- El CPA está entre 0,85 y 1,05 × Target, o
+- Está bajo el Target pero falta el gate de entrega o hay pocas compras.
+
+> En "sostener" la única palanca es **meter creativos nuevos**.
+
+**DESESCALAR** si el CPA en la ventana es **≥ 1,15 × Target**: bajar 30–60 % + revisar el embudo.
+- La campaña madre **no se apaga**: se queda en su piso (presupuesto de arranque o ~30–40 % del pico).
+- Ya en el piso → creativos nuevos + auditar el embudo.
+- **Apagar un anuncio** solo con gasto bajo + CPA no rentable durante 3–7 días. No apagar anuncios que no gastan: pueden despegar al día 5–7.
+
+**CORTAR duplicados de una ráfaga** (escalado horizontal): a los 3–8 días, si el CPA ≥ 1,2 × Target o hay 0 compras con 1,5 × Target gastado.
+
+### ⏱️ Qué ventana de CPA usar (según el volumen de la campaña)
+- **< 20 compras/día:** CPA de las últimas **24–48 h**, revisado **1 vez al día** al mediodía. Con pocas compras, una venta mueve el CPA un 50 % y decidir por horas es decidir sobre ruido.
+- **≥ 20–30 compras/día:** CPA **acumulado del día** (desde las 00 h), revisado **2–3 veces al día** entre las 8 h y las 18 h. Nunca antes de las 8–9 h, porque la mañana sale inflada y luego se corrige.
+- **Alternativa conservadora** (poca caja): 72 h seguidas bajo el Target → +20 % cada 24 h; 72 h sobre el break-even → −20 %.
 
 ### 🖨️ Checklist imprimible de la revisión diaria
 Genera/usa esta versión rellenando las líneas desde `targets.por_producto` del config:
@@ -70,27 +77,29 @@ POR CADA PRODUCTO, ubica el CPA de hoy:
  ESCALAR  │      SOSTENER          │   CORTAR
 ──────────┼────────────────────────┼────────────► CPA
 
-🟢 ¿ESCALAR (+20%)? — marca las TRES o no escalas:
-  [ ] CPA bajo Target 72h seguidas (3 días, no horas)
+VENTANA: <20 compras/día → CPA 24–48 h · ≥20–30/día → CPA del día (después de las 8–9 h)
+
+🟢 ¿ESCALAR? — marca las TRES o no escalas:
+  [ ] CPA ≤ 0,85 × Target con ≥ 4–5 compras en la ventana
   [ ] >70% compras por atribución de clic (solo Meta → ✔ auto)
   [ ] Entrega ≥ gate
-  → 3 ✔ = +20% (ROAS real duplica target → +100%)
-  → ya escalabas y sigue rentable = +20% otra vez (cada 24h, sin re-esperar 72h)
+  → 3 ✔ = ×1,5–2 (volumen bajo) · ×1,5–5 (volumen alto, hasta 3 veces/día)
+  → ¿se toca el techo de saturación 2 veces? → escalado horizontal (ráfaga)
 
-🟡 ¿SOSTENER (no tocar)? — caso por defecto:
-  - CPA rentable pero arriba del Target, o
-  - CPA bajo Target pero aún sin 72h / entrega < gate
-  → única palanca hoy: creativos nuevos (adset 3:1:1). NO subir presupuesto.
+🟡 ¿SOSTENER (no tocar)?
+  - CPA entre 0,85 y 1,05 × Target, o entrega < gate
+  → única palanca hoy: creativos nuevos. NO subir presupuesto.
 
-🔴 ¿CORTAR / DESESCALAR (−20%)?
-  [ ] CPA sobre Break-even (perdiendo) 72h seguidas → −20% + revisar embudo
-  - ya en mínimo diario → no bajar más: creativos + auditar funnel
+🔴 ¿DESESCALAR?
+  [ ] CPA ≥ 1,15 × Target → −30 a −60% + revisar embudo
+  - madre: nunca apagar, dejar en su piso
+  - duplicados de ráfaga: cortar a los 3–8 días si CPA ≥ 1,2 × Target
   - apagar anuncio: solo con bajo gasto + CPA no rentable 3–7 días
     (NO apagar anuncios que no gastan — pueden despegar al día 5–7)
 
 ANTES DE CERRAR:
-  [ ] Subí ≥1 adset nuevo 3:1:1 (ángulo nuevo)
-  [ ] No forcé gasto ni toqué nada antes de las 72h
+  [ ] Subí ≥1 creativo nuevo al laboratorio
+  [ ] No forcé gasto ni decidí antes de las 8–9 h
 ```
 
 ## 🔵 SEMANAL — volumen creativo + higiene

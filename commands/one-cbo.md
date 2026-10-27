@@ -1,5 +1,5 @@
 ---
-description: Protocolo Meta Ads One CBO — decisiones de escalado/desescalado por CPA, con bug ROAS USD/COP
+description: Protocolo Meta Ads One CBO — madre + FLEX + laboratorio, escalado vertical por umbrales de CPA, ráfaga y corte, montaje por API, bug ROAS USD/COP
 ---
 
 # Protocolo One CBO ⚖️
@@ -72,10 +72,56 @@ Cuando algo no vende, se revisa **desde el Nivel 1 hacia abajo** — el primer n
 - Ventas al inicio que se caen → fatiga creativa, meter 2-3 ángulos frescos.
 - Todo en cero → revisar aprobación de Meta, presupuesto y pixel antes que nada.
 
-## Protocolo de ESCALADO — las 3 condiciones a la vez
-1. **Gate de tiempo** bajo el Target CPA (ver cadencias abajo).
-2. **>70%** de compras por atribución de **clic** (1d-click). Si Facebook es la única fuente, se cumple solo.
-3. Rentabilidad confirmada (sobre break-even — ver `/cod-ops:rentabilidad`).
+## Estructura que usan las cuentas que más venden (oct-2026)
+Patrón observado en las 3 cuentas COD de Colombia con más gasto entre las revisadas (la mayor: ~$157 M/mes y ~5.300 compras en un solo producto). Detalle y números en `docs/referentes-escalado.md`.
+- **Campaña madre permanente (CBO, máximo volumen):** la ganadora no se apaga ni se relanza. Se alimenta con creativos "graduados" de un laboratorio aparte. Hay madres de 6–8 meses con CPA estable.
+- **2 conjuntos abiertos por campaña** (país, 21–65, Advantage+ Audience):
+  - **FLEX:** formato flexible, un anuncio con varios videos o imágenes, y Meta elige cuál mostrar.
+  - **Anuncios normales:** 1–3 anuncios. Opcional: un conjunto "FLEX imágenes" y un LAL 3 %.
+- **Laboratorio de creativos:** campañas chicas ("LAB/PRUEBAS DE CREATIVOS", ABO o CBO baja). Lo que gana pasa a la madre.
+- **Creativo:** un copy fijo y solo rota el video o la imagen. El copy es un testimonio largo: dolor → lo que ya intentó → beneficios → envío gratis + contraentrega + urgencia. El título es prueba social ("+20.000 unidades vendidas ⭐", "4,5 de 5 ⭐"). Los ganadores son casi siempre video (CTR 4–9 %). Los claims siguen las reglas de cada producto; no se copian promesas de salud.
+- **Atribución:** algunas cuentas suman 1 d vista + video con interacción a los 7 d clic, y eso baja el CPA reportado. Antes de comparar CPAs entre cuentas, revisar `attribution_spec` del conjunto.
+
+## Protocolo de ESCALADO VERTICAL (presupuesto de la campaña)
+Condiciones previas, siempre:
+1. Rentabilidad confirmada: target y break-even vienen de `targets.por_producto` (ver `/cod-ops:rentabilidad`).
+2. Gate de entrega COD ≥ `gate_entrega_pct`.
+3. **>70 %** de las compras por atribución de clic.
+
+La métrica es el **CPA frente al Target**. El régimen depende del **volumen de la campaña**:
+
+| Volumen de la campaña | Ventana de CPA | Cuándo se revisa |
+|---|---|---|
+| **< 20 compras/día** (lanzamiento, tienda chica) | CPA de las últimas 24–48 h | 1 vez al día, al mediodía |
+| **≥ 20–30 compras/día** (producto estable) | CPA acumulado **del día** (desde las 00 h) | 2–3 veces al día, entre las 8 h y las 18 h. Nunca antes de las 8–9 h: la mañana sale inflada y luego se corrige |
+
+| CPA frente al Target | Acción |
+|---|---|
+| **≤ 0,85 × Target** con ≥ 4–5 compras en la ventana | **Subir.** Régimen bajo: ×1,5–2. Régimen alto: ×1,5–5 de una vez, hasta 3 subidas el mismo día |
+| 0,85 – 1,05 × Target | Mantener |
+| **≥ 1,15 × Target** | **Bajar 30–60 %** |
+| Día malo en la ganadora | **No apagarla.** Estacionarla en un piso (régimen alto: ~30–40 % de su presupuesto pico; régimen bajo: el presupuesto de arranque) y volver a subirla cuando el CPA se recupere |
+
+- **El presupuesto es un techo:** Meta gasta el 60–80 % de lo asignado. Se pone alto para que pueda gastar si encuentra compradores.
+- **Punto de saturación:** cada campaña tiene un gasto/día a partir del cual el CPA se dispara. En el referente: sostenible a 1,2–1,6 M/día; a 3,66 M el CPA subió +20 %. Cuando se toca dos veces, no se sigue subiendo esa campaña: se escala en horizontal (abajo).
+- **Editar o duplicar:** con volumen alto los referentes editan el presupuesto de la CBO en caliente, varias veces al día, sin perder la entrega. Con volumen bajo (< 50 compras/semana) un cambio grande puede devolver la campaña a aprendizaje; ahí se prefiere un salto moderado (×1,5) o duplicar.
+- **Tope de puja (bid cap):** solo con CPA estable. Tope ≈ Target, presupuesto alto como techo y unos 10 videos. En el referente dio el mejor CPA de la cuenta. El cost cap fracasó (CPA 2,6–4 × Target).
+
+## Protocolo de ESCALADO HORIZONTAL (ráfaga de duplicados)
+Para crecer más allá del punto de saturación de una campaña. **Solo con un producto probado:** la madre lleva 3 días seguidos con CPA ≤ Target.
+- **Por qué funciona:** cada duplicado entra a la subasta con usuarios y aprendizaje distintos. Rinden muy diferente aunque sean iguales. Lanzar varios es comprar boletos para encontrar 1 o 2 que aguanten mucho presupuesto.
+- **Referente:** ~30 duplicados a $60k/día en 5 días (mismo copy, distinto video o combinación). Corte masivo a los 6–8 días. Sobrevivieron 2–3 (≈ 7 %). Después no lanzaron más y solo escalaron las sobrevivientes.
+- **Versión estándar (caja limitada):**
+  - Ráfaga: 3 duplicados al día durante 2 días, a 2–3 × Target cada uno.
+  - Reserva: un "presupuesto de boletos" de unos 30 × Target.
+  - Nombres: `DD-MM-AAAA PRODUCTO (variante) N`.
+- **Corte, a los 3–8 días:**
+  - Apagar si el CPA ≥ 1,2 × Target, **aunque ya haya gastado mucho** (el referente apagó una campaña con 190 × Target gastado y CPA de 1,2 × Target).
+  - Apagar si lleva 0 compras con 1,5 × Target gastado.
+- **Sobreviven** las que quedan con CPA ≤ Target. Entran al escalado vertical y se suman a la madre.
+
+## Protocolo anterior (+20 %) — solo como alternativa conservadora
+Si no hay caja para absorber variación, se puede usar la regla clásica en vez del vertical por umbrales.
 
 ### Dos cadencias — elegir según el contexto, no mezclar a medias
 - **Agresiva (estándar del squad):** gate de **72h** consecutivas sobre target → **+20% cada 24h** mientras aguante. Usar cuando hay caja para absorber ruido y el producto/cuenta ya tiene historial.
@@ -83,7 +129,7 @@ Cuando algo no vende, se revisa **desde el Nivel 1 hacia abajo** — el primer n
 
 Acción de salto: **+20%** (ambas cadencias). **+100% (duplicar)** si el ROAS real es el doble del Target, en cualquiera de las dos.
 
-> **Importante — no editar el anuncio ganador para subirle presupuesto.** Cualquier cambio directo (hasta el presupuesto) reinicia su fase de aprendizaje en Meta. Se **duplica** el conjunto ganador con el presupuesto nuevo y se deja el original intacto corriendo al lado — nunca se edita en caliente.
+> **Con volumen bajo, no editar el conjunto ganador para subirle presupuesto.** Un cambio grande puede reiniciar su fase de aprendizaje. Se **duplica** el conjunto ganador con el presupuesto nuevo y el original sigue corriendo intacto al lado. Con volumen alto (≥ 20–30 compras/día) aplica el escalado vertical de arriba: se edita la CBO en caliente.
 
 > **Definición del gate (ambas cadencias):** son horas/días *consecutivos de desempeño* sobre el Target, evaluados 1 vez/día — NO una ventana móvil por hora, ni un cronómetro desde el último cambio/publicación. Están ancladas a la racha de rendimiento (ruido intradía de Meta + fase de aprendizaje). El gate es la **puerta de entrada**: una vez dentro, subes en la cadencia elegida mientras aguante, sin re-esperar el gate por cada subida. Para desescalar, igual: mismo gate en rojo antes del −20%.
 
@@ -92,7 +138,8 @@ Acción de salto: **+20%** (ambas cadencias). **+100% (duplicar)** si el ROAS re
 - Sobre break-even (perdiendo) → −20% y revisar embudo.
 - Ya en el mínimo → no bajar más: creativos nuevos, auditar funnel.
 
-## Apagar — con paciencia
+## Apagar — con paciencia (anuncios dentro de la madre)
+> Las **campañas duplicadas de una ráfaga** se cortan con su propia regla, más dura: CPA ≥ 1,2 × Target a los 3–8 días (ver escalado horizontal). La **madre** nunca se apaga; se deja en un piso.
 - **NO apagar** anuncios que no gastan (muchos arrancan semanas después).
 - **NO apagar** adsets de CPA alto con **tráfico frío** (sostienen retargeting).
 - **Apagar solo** con bajo gasto + CPA no rentable durante **3–7 días**.
@@ -111,13 +158,21 @@ Si la cuenta mezcla CBO y ABO, tratar cada campaña según su tipo detectado, no
 
 ## Montar la campaña por API (Meta Ads MCP) — lecciones de campo (2026-10-09)
 
-El conector trabaja en **modo borrador**: todo lo que se crea o edita (incluida una pausa) queda staged hasta publicar. Una pausa en borrador **no** apaga lo que está en vivo; para frenar gasto ya, el usuario lo apaga en el Administrador o se publica la pausa.
+El conector trabaja en **modo borrador**. Lo que se crea y casi todo lo que se edita queda en borrador hasta publicarlo (actualizado el 27-oct-2026):
+- **Pausa sola** (`ads_update_entity` con `fields={"status":"PAUSED"}` y nada más) sobre algo ya publicado: se aplica **en vivo** y devuelve `is_draft=false`. Después **no** llamar a `ads_activate_entity`, porque puede deshacer la pausa. Se verifica con `ads_get_ad_entities`.
+- **Cambio de presupuesto** (o una pausa junto con otros campos): queda en borrador (`is_draft=true`). Se publica con `ads_activate_entity` pasando solo ese objeto en `object_ids` y `publish_as_active=false`.
+- **Presupuestos en COP:** van en pesos enteros (`daily_budget=60000` = $60.000/día).
+- **Arranque programado:** poner `start_time` en el conjunto (p. ej. `2026-10-28T05:00:00-0500`). Así se publica de noche y empieza a gastar a las 5 am.
 
 **Orden que funciona:**
 1. `ads_create_campaign` (Ventas, CBO con `campaign_daily_budget` en la unidad mínima de la moneda; COP 90000 = $90.000/día, `LOWEST_COST_WITHOUT_CAP`).
 2. `ads_create_ad_set` × N (OPEN 1..N): `optimization_goal=OFFSITE_CONVERSIONS`, `billing_event=IMPRESSIONS`, `destination_type=WEBSITE`, `promoted_object={"pixel_id":…,"custom_event_type":"PURCHASE"}` **sin product_set_id**, targeting país + edad (Advantage+ la vuelve sugerencia). Sin `start_time` → arranca al publicar.
 3. Creativos: `ads_create_creative` con `object_story_spec` (video_data con `image_hash` de miniatura, o link_data con `image_hash`) + `instagram_user_id` + **todas las funciones de `degrees_of_freedom_spec` en OPT_OUT**. No pasar `image_url` y `image_hash` a la vez (ObjectStorySpecRedundant). Un creativo inline sin DOF activa funciones de catálogo.
+   - **Estáticos con 2 tamaños:** usar `placement_customizations`. La imagen 4:5 es la base (feed). La 9:16 va en historias y reels de Facebook e Instagram (`facebook_positions: story, facebook_reels`; `instagram_positions: story, reels`).
+   - **Imágenes desde el CDN de Shopify:** a veces Meta no logra descargarlas (`ads_creative_upload_media` falla). Reintentar con y sin el parámetro `?v=` de la URL.
+   - **Lista de funciones DOF en OPT_OUT:** `image_touchups`, `text_optimizations`, `adapt_to_placement`, `image_templates`, `image_uncrop`, `enhance_cta`, `product_extensions`, `site_extensions`, `video_auto_crop`.
 4. `ads_create_ad` con `{"creative_id":…}`. Revisar que `active_errors` venga vacío.
+   - **Pasar un ganador a la madre:** crear un anuncio nuevo en la madre con el **mismo `creative_id`** del ganador. Se conservan el contenido y el UTM originales; las métricas del anuncio nuevo arrancan en cero.
 5. Verificar el borrador (`ads_get_ad_entities` con `object_state=draft`) y la vista previa (`ads_get_ad_preview`) de cada anuncio.
 6. **Publicar por API** con `ads_activate_entity` pasando `object_ids` = campaña + conjuntos + anuncios y `publish_as_active=true`, con confirmación explícita del usuario. Devuelve `PUBLISHING` (entregado, no "en vivo"): unos minutos después, confirmar estados en vivo y la vista previa real.
 

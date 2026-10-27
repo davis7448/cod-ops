@@ -11,11 +11,13 @@ Sistema operativo para e-commerce **contra-entrega (COD)** en Colombia, empaquet
 |---------|-----|
 | `/cod-ops:setup-tienda` | Onboarda una tienda nueva (crea config + dashboard) |
 | `/cod-ops:seguimiento` | Cadencia operativa diaria/semanal/quincenal/mensual (la batuta) |
-| `/cod-ops:one-cbo` | Decisiones de escalado/desescalado en Meta (por CPA) |
+| `/cod-ops:one-cbo` | Estructura madre + FLEX + laboratorio, escalado vertical por umbrales de CPA, escalado horizontal (ráfaga) y corte, montaje por API |
 | `/cod-ops:rentabilidad` | Break-even, target CPA, ROAS real, cierre contable |
 | `/cod-ops:ruteo` | Optimización de transportadoras por zona |
 | `/cod-ops:reportes-logistica` | Parser Dropi + última milla, dedup de recreaciones |
 | `/cod-ops:confirmacion` | Snapshot diario del funnel de confirmación (Chatea Pro / UChat) |
+
+**Referentes** (`docs/referentes-escalado.md`): datos reales y anonimizados de cuentas COD de Colombia (oct-2026) que sustentan las reglas de escalado.
 
 **Motor del dashboard** (`templates/`): `build_data.py` (reportes → `data.json`) + `build_dashboard.py` (`data.json` → `dashboard.html` interactivo, 2 páginas) + `tienda.config.json` (la plantilla de config).
 
