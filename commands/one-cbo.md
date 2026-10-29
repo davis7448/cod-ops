@@ -27,6 +27,11 @@ ROAS_real  = ROAS_bruto × conversión_gen→entregada   (exacto, ver /cod-ops:r
 ```
 Hasta arreglar el origen, **ignorar ROAS y operar con CPA**.
 
+**Ticket promedio con el bug activo:** `average_purchases_conversion_value ÷ tasa_USDCOP` (~4.000) da una aproximación del precio de venta promedio en COP. Sirve para fijar la meta de CPA cuando no se conoce el precio, pero hay que confirmarlo con el dueño.
+
+### Meta de CPA rápida
+Si el dueño no da otra meta: **CPA objetivo = 20 % del precio de venta** (regla usada en las tiendas del autor desde oct-2026). Siempre se comprueba que quede por debajo del break-even de `/cod-ops:rentabilidad`. Si el break-even es menor, manda el break-even.
+
 ---
 
 ## Métricas: duras vs blandas
@@ -162,6 +167,7 @@ El conector trabaja en **modo borrador**. Lo que se crea y casi todo lo que se e
 - **Pausa sola** (`ads_update_entity` con `fields={"status":"PAUSED"}` y nada más) sobre algo ya publicado: se aplica **en vivo** y devuelve `is_draft=false`. Después **no** llamar a `ads_activate_entity`, porque puede deshacer la pausa. Se verifica con `ads_get_ad_entities`.
 - **Cambio de presupuesto** (o una pausa junto con otros campos): queda en borrador (`is_draft=true`). Se publica con `ads_activate_entity` pasando solo ese objeto en `object_ids` y `publish_as_active=false`.
 - **Presupuestos en COP:** van en pesos enteros (`daily_budget=60000` = $60.000/día).
+- ⚠️ **No todas las cuentas tienen el modo borrador.** Si la respuesta trae `is_draft=false` junto con `status_forced_to_paused=true` en un cambio de presupuesto, Meta **pausó la campaña en vivo**. Hay que reactivarla en el mismo turno con `ads_activate_entity` y verificar con `ads_get_ad_entities` (29-oct-2026).
 - **Arranque programado:** poner `start_time` en el conjunto (p. ej. `2026-10-28T05:00:00-0500`). Así se publica de noche y empieza a gastar a las 5 am.
 
 **Orden que funciona:**
@@ -170,6 +176,7 @@ El conector trabaja en **modo borrador**. Lo que se crea y casi todo lo que se e
 3. Creativos: `ads_create_creative` con `object_story_spec` (video_data con `image_hash` de miniatura, o link_data con `image_hash`) + `instagram_user_id` + **todas las funciones de `degrees_of_freedom_spec` en OPT_OUT**. No pasar `image_url` y `image_hash` a la vez (ObjectStorySpecRedundant). Un creativo inline sin DOF activa funciones de catálogo.
    - **Estáticos con 2 tamaños:** usar `placement_customizations`. La imagen 4:5 es la base (feed). La 9:16 va en historias y reels de Facebook e Instagram (`facebook_positions: story, facebook_reels`; `instagram_positions: story, reels`).
    - **Imágenes desde el CDN de Shopify:** a veces Meta no logra descargarlas (`ads_creative_upload_media` falla). Reintentar con y sin el parámetro `?v=` de la URL.
+   - **Videos desde Shopify Files:** después de `stagedUploadsCreate` (resource FILE), el `fileCreate` de un mp4 va con `contentType: FILE`. Con `VIDEO`, Shopify responde "Invalid video url". La URL del `GenericFile` (cdn.shopify.com) sirve directo para `ads_creative_upload_media` con `media_type=VIDEO`.
    - **Lista de funciones DOF en OPT_OUT:** `image_touchups`, `text_optimizations`, `adapt_to_placement`, `image_templates`, `image_uncrop`, `enhance_cta`, `product_extensions`, `site_extensions`, `video_auto_crop`.
 4. `ads_create_ad` con `{"creative_id":…}`. Revisar que `active_errors` venga vacío.
    - **Pasar un ganador a la madre:** crear un anuncio nuevo en la madre con el **mismo `creative_id`** del ganador. Se conservan el contenido y el UTM originales; las métricas del anuncio nuevo arrancan en cero.
