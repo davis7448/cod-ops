@@ -16,6 +16,10 @@ Sistema operativo para e-commerce **contra-entrega (COD)** en Colombia, empaquet
 | `/cod-ops:ruteo` | Optimización de transportadoras por zona |
 | `/cod-ops:reportes-logistica` | Parser Dropi + última milla, dedup de recreaciones |
 | `/cod-ops:confirmacion` | Snapshot diario del funnel de confirmación (Chatea Pro / UChat) |
+| `cod-ops:ads-invest` | Investigación de competidores (Ad Library, TikTok, AliExpress, mercado local) → matriz ángulo × formato → producción de creativos (voz, ffmpeg, Codex, Kling) y trasplantes |
+| `cod-ops:landing-cod` | Landing COD en Shopify: packshot, 7 piezas, GIFs, CDN, packs en Releasit, publicación y revisión en celular |
+
+**Flujo de producto nuevo:** `ads-invest` (investigación y creativos) → `landing-cod` (página) → `one-cbo` (RECON y luego madre) → `seguimiento`.
 
 **Referentes** (`docs/referentes-escalado.md`): datos reales y anonimizados de cuentas COD de Colombia (oct-2026) que sustentan las reglas de escalado.
 

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Ad Library Toolkit (swipe file)",
+  "version": "1.0.0",
+  "description": "Captura los anuncios que ves en la Meta Ad Library y los exporta como swipe_file.json (con URLs de media) para la skill ads-invest.",
+  "permissions": ["storage", "downloads"],
+  "host_permissions": ["*://*.facebook.com/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Ad Library Toolkit"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.facebook.com/ads/library/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.facebook.com/ads/library/*"],
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}

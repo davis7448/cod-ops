@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { width: 260px; font: 13px system-ui, sans-serif; padding: 12px; margin: 0; }
+      h1 { font-size: 14px; margin: 0 0 8px; }
+      .count { font-size: 28px; font-weight: 700; margin: 4px 0; }
+      .muted { color: #666; font-size: 11px; }
+      button { width: 100%; padding: 8px; margin-top: 8px; border: 0; border-radius: 6px;
+               cursor: pointer; font-size: 13px; }
+      .primary { background: #1877f2; color: #fff; }
+      .ghost { background: #eee; color: #222; }
+      .hint { margin-top: 10px; font-size: 11px; color: #888; line-height: 1.4; }
+    </style>
+  </head>
+  <body>
+    <h1>Ad Library Toolkit</h1>
+    <div class="muted">Anuncios con media capturados:</div>
+    <div class="count" id="count">0</div>
+    <button class="primary" id="export">Exportar swipe_file.json</button>
+    <button class="ghost" id="clear">Limpiar</button>
+    <div class="hint">
+      Abre la Meta Ad Library y desplázate por los anuncios que te interesen.
+      Cada uno con video/imagen se acumula aquí. Luego expórtalo y pásalo al script
+      <code>download_swipe_media.py</code>. Las URLs caducan en horas: descarga el mismo día.
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

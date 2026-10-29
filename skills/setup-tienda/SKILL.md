@@ -30,6 +30,17 @@ Onboarda una tienda nueva para el sistema `cod-ops`. Al terminar, el proyecto ti
    - **Costos:** confirmación por despachada, comisión %, impuesto %, flete última milla.
    - **Columnas Dropi:** confirmar que los encabezados del export coinciden con `dropi_columnas` (pedir un reporte de muestra y leer la fila de encabezados).
    - **Reportes:** rutas de los xlsx de Dropi.
+   - **Creativos** (los usan `cod-ops:ads-invest` y `cod-ops:landing-cod`): agrega al config esta sección (el template todavía no la trae):
+     ```json
+     "creativos": {
+       "carpeta": "~/ads-invest",
+       "pixel_id": "<píxel de Meta>",
+       "shopify_publication_id": "gid://shopify/Publication/<id de la Tienda online>",
+       "artifact_referencia": "<link de una investigación modelo, opcional>",
+       "plantillas": { "clinica": "<gid numérico de un producto>", "kawaii": "<gid numérico>" }
+     }
+     ```
+     El píxel sale de `ads_get_datasets`. La publicación sale de la query `publications` de Shopify (la de nombre "Online Store").
 
 4. **Cargar datos mensuales iniciales:**
    - Pauta por producto: jalar de Meta MCP (`ads_get_ad_entities`, mapear campañas a productos por nombre).
